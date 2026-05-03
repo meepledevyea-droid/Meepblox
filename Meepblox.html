@@ -1,0 +1,4507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meepblox</title>
+  <style>
+    :root {
+      --bg-top: #7ea6d8;
+      --bg-bottom: #5f81aa;
+      --panel: #d7e0eb;
+      --panel-dark: #c3cfdd;
+      --panel-border: #8198b2;
+      --text: #162435;
+      --muted: #32465f;
+      --green: #58c95c;
+      --green-dark: #44a247;
+      --blue: #4e7bd6;
+      --red: #c53b3b;
+      --red-dark: #942828;
+      --shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+      --font: Verdana, Geneva, Tahoma, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font);
+      color: var(--text);
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: none;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .auth-screen {
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .auth-shell {
+      width: min(460px, 100%);
+    }
+
+    .title {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: clamp(2.8rem, 8vw, 4.2rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .title p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .auth-screen .card,
+    .menu-screen .card {
+      background: rgba(236, 241, 247, 0.88);
+      backdrop-filter: blur(10px);
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: #bfcbd9;
+      border: 1px solid #8198b2;
+      border-radius: 6px;
+      padding: 5px;
+      margin-bottom: 18px;
+    }
+
+    .tab {
+      border: 0;
+      border-radius: 4px;
+      padding: 12px;
+      background: transparent;
+      color: #223750;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .tab.active {
+      background: var(--green);
+      color: #0d1711;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid #8198b2;
+      border-radius: 4px;
+      background: #f8fbff;
+      color: #162435;
+      padding: 14px 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #62d282;
+      box-shadow: 0 0 0 3px rgba(72, 197, 109, 0.12);
+    }
+
+    .button {
+      border: 0;
+      border-radius: 4px;
+      padding: 13px 16px;
+      cursor: pointer;
+      font-weight: 800;
+      color: #0d1711;
+      background: var(--green);
+    }
+
+    .button:hover {
+      background: var(--green-dark);
+    }
+
+    .button:disabled {
+      opacity: 0.72;
+      cursor: wait;
+    }
+
+    .button.full {
+      width: 100%;
+    }
+
+    .button.secondary {
+      background: #6f86a1;
+      color: #ffffff;
+    }
+
+    .button.secondary:hover {
+      background: #607892;
+    }
+
+    .button.red {
+      background: var(--red);
+      color: #fff6f6;
+    }
+
+    .button.red:hover {
+      background: var(--red-dark);
+    }
+
+    .status {
+      display: none;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 4px;
+      background: #cdd7e2;
+      line-height: 1.45;
+      font-size: 0.95rem;
+    }
+
+    .status.show {
+      display: block;
+    }
+
+    .status.error {
+      color: #ffe3e8;
+      background: rgba(197, 59, 59, 0.18);
+      border: 1px solid rgba(255, 160, 160, 0.18);
+    }
+
+    .status.success {
+      color: #dbffe4;
+      background: rgba(72, 197, 109, 0.18);
+      border: 1px solid rgba(163, 242, 183, 0.18);
+    }
+
+    .menu-screen {
+      padding: 24px;
+      display: none;
+      flex-direction: column;
+      gap: 18px;
+      overflow: auto;
+    }
+
+    .menu-screen.active {
+      display: flex;
+    }
+
+    .menu-status {
+      display: none;
+      padding: 10px 12px;
+      border: 1px solid rgba(129, 152, 178, 0.7);
+      border-radius: 6px;
+      background: rgba(236, 241, 247, 0.72);
+      color: #213449;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .menu-status.show {
+      display: block;
+    }
+
+    .menu-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .menu-brand h2 {
+      margin: 0;
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .menu-brand p,
+    .player-strip span,
+    .small {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .player-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--panel-dark);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+    }
+
+    .player-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 4px;
+      background: #f0ca50;
+      color: #1d1605;
+      font-weight: 900;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 340px) minmax(340px, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 1.12rem;
+    }
+
+    .friend-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .friend-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .friend-list {
+      display: grid;
+      gap: 10px;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .friend-item,
+    .game-card {
+      background: var(--panel-dark);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+    }
+
+    .friend-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .friend-slot {
+      min-height: 88px;
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+      align-content: start;
+      background: var(--panel-dark);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+    }
+
+    .friend-slot strong {
+      font-size: 0.9rem;
+    }
+
+    .friend-slot span {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .friend-slot .button,
+    .friend-request-actions .button {
+      padding: 8px 10px;
+      font-size: 0.8rem;
+    }
+
+    .friend-request-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .friend-meta strong,
+    .game-card strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .friend-meta span,
+    .game-card span {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .friend-item .button {
+      padding: 9px 12px;
+      font-size: 0.88rem;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .studio-screen {
+      display: none;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0)),
+        linear-gradient(180deg, #2d3440 0%, #232933 100%);
+    }
+
+    .studio-screen.active {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+    }
+
+    .studio-sidebar {
+      background: #3a4351;
+      border-right: 1px solid #20242c;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto auto auto auto 1fr;
+      gap: 14px;
+      overflow: auto;
+    }
+
+    .studio-header h2,
+    .studio-header p,
+    .studio-block h3 {
+      margin: 0;
+    }
+
+    .studio-header h2 {
+      font-size: 1.8rem;
+      letter-spacing: -0.03em;
+    }
+
+    .studio-header p {
+      margin-top: 5px;
+      color: #b8c6d6;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .studio-block {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid #232a33;
+      border-radius: 6px;
+      background: #4a5666;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .studio-block h3 {
+      font-size: 0.92rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #eef4fb;
+    }
+
+    .studio-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .studio-row.two {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .studio-label {
+      display: grid;
+      gap: 5px;
+      font-size: 0.8rem;
+      color: #d3deea;
+      font-weight: 700;
+    }
+
+    .studio-label input,
+    .studio-label select {
+      width: 100%;
+      border: 1px solid #252d38;
+      border-radius: 4px;
+      background: #e2e8ef;
+      color: #162435;
+      padding: 8px 9px;
+      font: inherit;
+      outline: none;
+    }
+
+    .studio-actions {
+      display: grid;
+      gap: 8px;
+    }
+
+    .studio-object-list {
+      display: grid;
+      gap: 8px;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .studio-object-item {
+      padding: 9px 10px;
+      border-radius: 4px;
+      border: 1px solid #2a313b;
+      background: #d9e1ea;
+      cursor: pointer;
+      line-height: 1.35;
+    }
+
+    .studio-object-item.active {
+      border-color: #4d83d7;
+      background: rgba(96, 137, 211, 0.18);
+    }
+
+    .studio-tool-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .studio-tool-button.active {
+      background: #2b5fb4;
+      color: #ffffff;
+      border-color: #244d8f;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .studio-readout {
+      display: grid;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: #d3deea;
+      font-weight: 700;
+    }
+
+    .studio-readout span {
+      display: block;
+      min-height: 18px;
+      padding: 8px 9px;
+      border: 1px solid #252d38;
+      border-radius: 4px;
+      background: #e2e8ef;
+      color: #162435;
+      font-weight: 600;
+    }
+
+    .studio-canvas-wrap {
+      position: relative;
+      min-width: 0;
+    }
+
+    #studioCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .studio-overlay {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+
+    .studio-pill {
+      padding: 9px 11px;
+      border-radius: 4px;
+      border: 1px solid #1f2630;
+      background: rgba(59, 69, 83, 0.88);
+      color: #edf4fb;
+      font-size: 0.86rem;
+      line-height: 1.4;
+      pointer-events: auto;
+    }
+
+    .game-card {
+      overflow: hidden;
+    }
+
+    .game-thumb {
+      display: none;
+    }
+
+    .game-thumb::before {
+      display: none;
+    }
+
+    .thumb-noob {
+      display: none;
+    }
+
+    .thumb-noob div {
+      position: absolute;
+      border-radius: 2px;
+    }
+
+    .thumb-head,
+    .thumb-arm {
+      background: #ffd74b;
+    }
+
+    .thumb-body {
+      background: #2b67d1;
+    }
+
+    .thumb-leg {
+      background: #54a33f;
+    }
+
+    .thumb-head {
+      width: 34px;
+      height: 28px;
+      top: 0;
+      left: 10px;
+    }
+
+    .thumb-body {
+      width: 40px;
+      height: 24px;
+      top: 24px;
+      left: 7px;
+    }
+
+    .thumb-arm {
+      width: 10px;
+      height: 26px;
+      top: 25px;
+    }
+
+    .thumb-arm.left {
+      left: -1px;
+    }
+
+    .thumb-arm.right {
+      right: -1px;
+    }
+
+    .thumb-leg {
+      width: 12px;
+      height: 28px;
+      bottom: 0;
+    }
+
+    .thumb-leg.left {
+      left: 12px;
+    }
+
+    .thumb-leg.right {
+      right: 12px;
+    }
+
+    .game-info {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .game-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .ingame-screen {
+      display: none;
+      background: #87c4ff;
+    }
+
+    .ingame-screen.active {
+      display: block;
+    }
+
+    #gameCanvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .ingame-ui {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .hud-label {
+      position: fixed;
+      color: #ffffff;
+      font-size: 0.92rem;
+      font-weight: 700;
+      white-space: nowrap;
+      transform: translate(-50%, -120%);
+      pointer-events: none;
+      text-align: center;
+      text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.92),
+        0 0 6px rgba(0, 0, 0, 0.65);
+    }
+
+    .hud-chat {
+      display: none;
+      margin-bottom: 4px;
+      padding: 5px 9px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #151515;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-shadow: none;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    }
+
+    .hud-name {
+      display: block;
+    }
+
+    .hud-top {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+
+    .hud-left,
+    .corner-menu-wrap,
+    .chat-wrap,
+    .game-note,
+    .death-overlay {
+      pointer-events: auto;
+    }
+
+    .hud-left {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .game-note {
+      padding: 10px 12px;
+      border-radius: 4px;
+      background: rgba(236, 241, 247, 0.58);
+      color: #182736;
+      border: 1px solid rgba(140, 163, 188, 0.78);
+      backdrop-filter: blur(8px);
+      font-size: 0.88rem;
+    }
+
+    .corner-button {
+      width: 18px;
+      height: 18px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--red);
+      box-shadow: 0 0 0 2px rgba(20, 10, 10, 0.38);
+      cursor: pointer;
+    }
+
+    .chat-button {
+      width: 18px;
+      height: 18px;
+      border: 0;
+      border-radius: 999px;
+      background: #5b7fd7;
+      box-shadow: 0 0 0 2px rgba(20, 26, 40, 0.25);
+      cursor: pointer;
+    }
+
+    .corner-panel {
+      margin-top: 10px;
+      width: 300px;
+      max-height: min(72vh, 620px);
+      overflow: auto;
+      padding: 12px;
+      background: rgba(224, 231, 240, 0.54);
+      border: 1px solid rgba(140, 163, 188, 0.82);
+      border-radius: 6px;
+      display: none;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .corner-panel.open {
+      display: grid;
+      gap: 8px;
+    }
+
+    .corner-panel .button {
+      width: 100%;
+      text-align: left;
+    }
+
+    .corner-section {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .corner-title {
+      color: #22354c;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .player-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .player-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.42);
+      border: 1px solid rgba(129, 152, 178, 0.46);
+    }
+
+    .player-row strong {
+      display: block;
+      font-size: 0.9rem;
+    }
+
+    .player-row span {
+      display: block;
+      color: #31475f;
+      font-size: 0.76rem;
+    }
+
+    .player-row .button {
+      width: auto;
+      padding: 8px 10px;
+      font-size: 0.78rem;
+    }
+
+    .chat-panel {
+      margin-top: 10px;
+      width: min(360px, calc(100vw - 24px));
+      padding: 10px;
+      background: rgba(224, 231, 240, 0.56);
+      border: 1px solid rgba(140, 163, 188, 0.82);
+      border-radius: 6px;
+      display: none;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .chat-panel.open {
+      display: grid;
+      gap: 10px;
+    }
+
+    .chat-log {
+      height: 210px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+      padding-right: 4px;
+    }
+
+    .chat-line {
+      padding: 8px 9px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.44);
+      border: 1px solid rgba(129, 152, 178, 0.42);
+      color: #182736;
+      font-size: 0.86rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .chat-line strong {
+      color: #132536;
+    }
+
+    .chat-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .chat-form input {
+      padding: 10px 12px;
+    }
+
+    .death-overlay {
+      position: fixed;
+      inset: auto 50% 26px auto;
+      transform: translateX(50%);
+      padding: 12px 16px;
+      border-radius: 4px;
+      background: rgba(236, 241, 247, 0.96);
+      border: 1px solid #8ca3bc;
+      color: #182736;
+      font-size: 0.92rem;
+      display: none;
+    }
+
+    .death-overlay.show {
+      display: block;
+    }
+
+    @media (max-width: 980px) {
+      .menu-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .studio-screen.active {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .menu-screen {
+        padding: 16px;
+      }
+
+      .menu-topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .friend-form {
+        grid-template-columns: 1fr;
+      }
+
+      .games-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .game-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="screen auth-screen active" id="authScreen">
+    <div class="auth-shell">
+      <div class="title">
+        <h1>Meepblox</h1>
+        <p>Login or create an account.</p>
+      </div>
+
+      <div class="card">
+        <div class="tabs" role="tablist" aria-label="Account">
+          <button class="tab active" id="createTab" type="button">Create</button>
+          <button class="tab" id="loginTab" type="button">Login</button>
+        </div>
+
+        <form class="panel active" id="createForm" novalidate>
+          <div class="field">
+            <label for="createUsername">Username</label>
+            <input id="createUsername" type="text" maxlength="20" autocomplete="username" required>
+          </div>
+
+          <div class="field">
+            <label for="createDisplayName">Display Name</label>
+            <input id="createDisplayName" type="text" maxlength="25" autocomplete="nickname" required>
+          </div>
+
+          <div class="field">
+            <label for="createPassword">Password</label>
+            <input id="createPassword" type="password" minlength="6" autocomplete="new-password" required>
+          </div>
+
+          <button class="button full" id="createButton" type="submit">Create Account</button>
+        </form>
+
+        <form class="panel" id="loginForm" novalidate>
+          <div class="field">
+            <label for="loginUsername">Username</label>
+            <input id="loginUsername" type="text" autocomplete="username" required>
+          </div>
+
+          <div class="field">
+            <label for="loginPassword">Password</label>
+            <input id="loginPassword" type="password" autocomplete="current-password" required>
+          </div>
+
+          <button class="button full" id="loginButton" type="submit">Login</button>
+        </form>
+
+        <div class="status" id="authStatus" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen menu-screen" id="menuScreen">
+    <div class="menu-topbar">
+      <div class="menu-brand">
+        <h2>Meepblox</h2>
+        <p>Home</p>
+      </div>
+
+      <div class="player-strip">
+        <div class="player-icon" id="playerIcon">M</div>
+        <div>
+          <strong id="menuDisplayName">Player</strong>
+          <span id="menuUsername">@username</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-status" id="menuStatus"></div>
+
+    <div class="menu-grid">
+      <div class="stack">
+        <div class="card">
+          <h3 class="section-title">Friends</h3>
+          <form class="friend-form" id="friendForm">
+            <input id="friendInput" type="text" maxlength="20" placeholder="Send a friend request" required>
+            <button class="button" type="submit">Send</button>
+          </form>
+          <div class="friend-strip" id="friendStrip"></div>
+          <div class="friend-list" id="friendList"></div>
+          <p class="small" id="friendHint">No friends or requests yet.</p>
+        </div>
+
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <h3 class="section-title">Games</h3>
+          <div class="games-grid" id="gamesGrid"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">Account</h3>
+          <div class="game-actions">
+            <button class="button secondary" id="logoutButton" type="button">Log Out</button>
+            <button class="button" id="openStudioButton" type="button">Meepblox Studio</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">Avatar</h3>
+          <div class="friend-form" style="grid-template-columns: 1fr 1fr;">
+            <label class="field" style="margin:0;">
+              <span>Hat</span>
+              <select id="avatarHatSelect">
+                <option value="none">None</option>
+                <option value="topHat">Top Hat</option>
+                <option value="baseballCap">Baseball Cap</option>
+                <option value="pizzaHat">Pizza Hat</option>
+              </select>
+            </label>
+            <div></div>
+            <label class="field" style="margin:0;">
+              <span>Shirt</span>
+              <input id="avatarShirtColor" type="color" value="#1b66cc">
+            </label>
+            <label class="field" style="margin:0;">
+              <span>Pants</span>
+              <input id="avatarPantsColor" type="color" value="#9bbc4b">
+            </label>
+          </div>
+          <div class="game-actions">
+            <button class="button secondary" id="avatarSaveButton" type="button">Save Avatar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen studio-screen" id="studioScreen">
+    <div class="studio-sidebar">
+      <div class="studio-header">
+        <h2>Meepblox Studio</h2>
+        <p>Build simple games, publish them to the menu, and optionally sync edits with another tab.</p>
+      </div>
+
+      <div class="studio-block">
+        <h3>Studio Menu</h3>
+        <label class="studio-label">
+          Name
+          <input id="studioGameName" type="text" maxlength="32" placeholder="New Game">
+        </label>
+        <label class="studio-label">
+          Shared
+          <select id="studioSharedSelect">
+            <option value="yes">Shared</option>
+            <option value="no">Private</option>
+          </select>
+        </label>
+        <div class="studio-row">
+          <button class="button secondary" id="studioNewButton" type="button">New</button>
+          <button class="button secondary" id="studioSaveButton" type="button">Save</button>
+          <button class="button" id="studioPublishButton" type="button">Publish</button>
+        </div>
+        <button class="button secondary" id="studioBackButton" type="button">Back To Menu</button>
+      </div>
+
+      <div class="studio-block">
+        <h3>Saved Games</h3>
+        <div class="studio-object-list" id="studioSavedList"></div>
+      </div>
+
+      <div class="studio-block">
+        <h3>Add</h3>
+        <div class="studio-row">
+          <button class="button secondary" id="addBaseplateButton" type="button">Baseplate</button>
+          <button class="button" id="addCubeButton" type="button">Cube</button>
+          <button class="button" id="addSphereButton" type="button">Sphere</button>
+        </div>
+        <div class="studio-row">
+          <button class="button" id="addCylinderButton" type="button">Cylinder</button>
+          <button class="button secondary" id="addSpawnButton" type="button">Spawn</button>
+          <button class="button secondary" id="duplicateObjectButton" type="button">Duplicate</button>
+        </div>
+        <div class="studio-row">
+          <button class="button red" id="deleteObjectButton" type="button">Delete</button>
+        </div>
+      </div>
+
+      <div class="studio-block">
+        <h3>Selected</h3>
+        <div class="studio-readout">
+          <label>Type<span id="studioSelectedType">None</span></label>
+          <label>Tool<span id="studioToolReadout">Move</span></label>
+        </div>
+        <div class="studio-tool-row">
+          <button class="button studio-tool-button active" id="studioMoveToolButton" type="button">Move</button>
+          <button class="button secondary studio-tool-button" id="studioRotateToolButton" type="button">Rotate</button>
+          <button class="button secondary studio-tool-button" id="studioScaleToolButton" type="button">Scale</button>
+        </div>
+        <label class="studio-label">
+          Move Snap
+          <select id="studioMoveSnapSelect">
+            <option value="on">On</option>
+            <option value="off">Off</option>
+          </select>
+        </label>
+        <label class="studio-label">
+          Rotate Snap
+          <select id="studioRotateSnapSelect">
+            <option value="on">On</option>
+            <option value="off">Off</option>
+          </select>
+        </label>
+        <label class="studio-label">
+          Scale Snap
+          <select id="studioScaleSnapSelect">
+            <option value="on">On</option>
+            <option value="off">Off</option>
+          </select>
+        </label>
+        <p class="small">Click a part to select it, then drag the colored handles. `W` move, `E` rotate, `R` scale.</p>
+      </div>
+
+      <div class="studio-block">
+        <h3>Objects</h3>
+        <div class="studio-object-list" id="studioObjectList"></div>
+      </div>
+    </div>
+
+    <div class="studio-canvas-wrap">
+      <canvas id="studioCanvas"></canvas>
+      <div class="studio-overlay">
+        <div class="studio-pill" id="studioStatus">Select an object to edit it.</div>
+        <div class="studio-pill">Use the colored gizmo handles. Right drag look. Wheel zoom.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen ingame-screen" id="ingameScreen">
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="ingame-ui">
+      <div class="hud-top">
+        <div class="hud-left">
+          <div class="corner-menu-wrap">
+            <button class="corner-button" id="cornerButton" type="button" aria-label="Open game menu"></button>
+            <div class="corner-panel" id="cornerPanel">
+              <button class="button secondary" id="respawnButton" type="button">Respawn</button>
+              <button class="button red" id="quitGameButton" type="button">Quit Game</button>
+              <div class="corner-section">
+                <div class="corner-title">Players</div>
+                <div class="player-list" id="playerMenuList"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-wrap">
+            <button class="chat-button" id="chatButton" type="button" aria-label="Open chat"></button>
+            <div class="chat-panel" id="chatPanel">
+              <div class="chat-log" id="chatLog"></div>
+              <form class="chat-form" id="chatForm">
+                <input id="chatInput" type="text" maxlength="120" placeholder="Say something" autocomplete="off">
+                <button class="button" type="submit">Send</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="game-note" id="gameNote">WASD move, Space jump, wheel zoom, click in first person to look.</div>
+      </div>
+
+      <div class="death-overlay" id="deathOverlay">Respawning...</div>
+      <div id="labelLayer"></div>
+    </div>
+  </section>
+
+  <script type="module">
+    import * as THREE from "https://unpkg.com/three@0.165.0/build/three.module.js";
+
+    const TITLE_ID = "141971";
+    const API_BASE = `https://${TITLE_ID}.playfabapi.com/Client`;
+    const SESSION_KEY = "meepbloxSession";
+    const FRIEND_STATE_KEY = "meepbloxFriendState";
+    const PRESENCE_KEY = "meepbloxPresence";
+    const ROOM_ID = "c3ce1620-c300-4ec5-a789-9dad6fbfbc02";
+    const MULTIPLAYER_CHANNEL_NAME = `meepblox-room-${ROOM_ID}`;
+
+    const authScreen = document.getElementById("authScreen");
+    const menuScreen = document.getElementById("menuScreen");
+    const ingameScreen = document.getElementById("ingameScreen");
+    const studioScreen = document.getElementById("studioScreen");
+
+    const createTab = document.getElementById("createTab");
+    const loginTab = document.getElementById("loginTab");
+    const createForm = document.getElementById("createForm");
+    const loginForm = document.getElementById("loginForm");
+    const createButton = document.getElementById("createButton");
+    const loginButton = document.getElementById("loginButton");
+    const authStatus = document.getElementById("authStatus");
+
+    const menuDisplayName = document.getElementById("menuDisplayName");
+    const menuUsername = document.getElementById("menuUsername");
+    const menuStatus = document.getElementById("menuStatus");
+    const playerIcon = document.getElementById("playerIcon");
+    const friendForm = document.getElementById("friendForm");
+    const friendInput = document.getElementById("friendInput");
+    const friendStrip = document.getElementById("friendStrip");
+    const friendList = document.getElementById("friendList");
+    const friendHint = document.getElementById("friendHint");
+    const gamesGrid = document.getElementById("gamesGrid");
+    const logoutButton = document.getElementById("logoutButton");
+    const openStudioButton = document.getElementById("openStudioButton");
+    const avatarHatSelect = document.getElementById("avatarHatSelect");
+    const avatarShirtColor = document.getElementById("avatarShirtColor");
+    const avatarPantsColor = document.getElementById("avatarPantsColor");
+    const avatarSaveButton = document.getElementById("avatarSaveButton");
+
+    const gameCanvas = document.getElementById("gameCanvas");
+    const cornerButton = document.getElementById("cornerButton");
+    const cornerPanel = document.getElementById("cornerPanel");
+    const chatButton = document.getElementById("chatButton");
+    const chatPanel = document.getElementById("chatPanel");
+    const chatLog = document.getElementById("chatLog");
+    const chatForm = document.getElementById("chatForm");
+    const chatInput = document.getElementById("chatInput");
+    const playerMenuList = document.getElementById("playerMenuList");
+    const respawnButton = document.getElementById("respawnButton");
+    const quitGameButton = document.getElementById("quitGameButton");
+    const deathOverlay = document.getElementById("deathOverlay");
+    const gameNote = document.getElementById("gameNote");
+    const labelLayer = document.getElementById("labelLayer");
+
+    const studioCanvas = document.getElementById("studioCanvas");
+    const studioGameName = document.getElementById("studioGameName");
+    const studioSharedSelect = document.getElementById("studioSharedSelect");
+    const studioNewButton = document.getElementById("studioNewButton");
+    const studioSaveButton = document.getElementById("studioSaveButton");
+    const studioPublishButton = document.getElementById("studioPublishButton");
+    const studioBackButton = document.getElementById("studioBackButton");
+    const addBaseplateButton = document.getElementById("addBaseplateButton");
+    const addCubeButton = document.getElementById("addCubeButton");
+    const addSphereButton = document.getElementById("addSphereButton");
+    const addCylinderButton = document.getElementById("addCylinderButton");
+    const addSpawnButton = document.getElementById("addSpawnButton");
+    const duplicateObjectButton = document.getElementById("duplicateObjectButton");
+    const deleteObjectButton = document.getElementById("deleteObjectButton");
+    const studioSelectedType = document.getElementById("studioSelectedType");
+    const studioToolReadout = document.getElementById("studioToolReadout");
+    const studioMoveToolButton = document.getElementById("studioMoveToolButton");
+    const studioRotateToolButton = document.getElementById("studioRotateToolButton");
+    const studioScaleToolButton = document.getElementById("studioScaleToolButton");
+    const studioMoveSnapSelect = document.getElementById("studioMoveSnapSelect");
+    const studioRotateSnapSelect = document.getElementById("studioRotateSnapSelect");
+    const studioScaleSnapSelect = document.getElementById("studioScaleSnapSelect");
+    const studioObjectList = document.getElementById("studioObjectList");
+    const studioSavedList = document.getElementById("studioSavedList");
+    const studioStatus = document.getElementById("studioStatus");
+
+    let currentSession = null;
+    let moderationTimer = 0;
+    let currentGameData = null;
+
+    const MODERATION_KEY = "meepbloxModeration";
+    const CHAT_HISTORY_KEY = `meepbloxChat:${ROOM_ID}`;
+    const GAMES_KEY = "meepbloxPublishedGames";
+    const PLAYER_DATA_KEY = "AvatarData";
+    const USER_REGISTRY_KEY = "meepbloxUsers";
+    const BAD_WORDS = [
+      "fuck", "shit", "bitch", "damn", "asshole", "bastard", "dick", "piss",
+      "nigga", "nigger"
+    ];
+    const DEFAULT_AVATAR = {
+      hat: "none",
+      shirtColor: "#1b66cc",
+      pantsColor: "#9bbc4b"
+    };
+
+    function setAuthTab(tab) {
+      const creating = tab === "create";
+      createTab.classList.toggle("active", creating);
+      loginTab.classList.toggle("active", !creating);
+      createForm.classList.toggle("active", creating);
+      loginForm.classList.toggle("active", !creating);
+      clearAuthStatus();
+    }
+
+    function showAuthStatus(message, type = "") {
+      authStatus.textContent = message;
+      authStatus.className = "status show";
+      if (type) {
+        authStatus.classList.add(type);
+      }
+    }
+
+    function clearAuthStatus() {
+      authStatus.textContent = "";
+      authStatus.className = "status";
+    }
+
+    function saveSession(session) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    }
+
+    function loadSession() {
+      try {
+        return JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+      } catch {
+        return null;
+      }
+    }
+
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+    }
+
+    function loadModerationState() {
+      try {
+        return JSON.parse(localStorage.getItem(MODERATION_KEY) || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function saveModerationState(state) {
+      localStorage.setItem(MODERATION_KEY, JSON.stringify(state));
+    }
+
+    function getModerationEntry(username) {
+      const state = loadModerationState();
+      const entry = state[username] || {
+        offenses: 0,
+        bannedUntil: 0,
+        lastMessage: ""
+      };
+
+      if (entry.bannedUntil && Date.now() >= entry.bannedUntil) {
+        entry.offenses = 0;
+        entry.bannedUntil = 0;
+        state[username] = entry;
+        saveModerationState(state);
+      }
+
+      return entry;
+    }
+
+    function setModerationEntry(username, entry) {
+      const state = loadModerationState();
+      state[username] = entry;
+      saveModerationState(state);
+    }
+
+    function getBanTimeLeft(username) {
+      const entry = getModerationEntry(username);
+      return Math.max(0, entry.bannedUntil - Date.now());
+    }
+
+    function formatTimeLeft(ms) {
+      const totalSeconds = Math.ceil(ms / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${minutes}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function setMenuStatus(message = "") {
+      menuStatus.textContent = message;
+      menuStatus.classList.toggle("show", Boolean(message));
+    }
+
+    function setMenuPlayButtonsDisabled(disabled) {
+      document.querySelectorAll(".menu-play-button").forEach((button) => {
+        button.disabled = disabled;
+      });
+    }
+
+    function updateMenuModerationStatus() {
+      if (!currentSession?.username) {
+        setMenuStatus("");
+        setMenuPlayButtonsDisabled(false);
+        return;
+      }
+
+      const entry = getModerationEntry(currentSession.username);
+      const timeLeft = getBanTimeLeft(currentSession.username);
+      if (timeLeft > 0) {
+        setMenuPlayButtonsDisabled(true);
+        setMenuStatus(`You said "${entry.lastMessage}". You are banned from Baseplate for ${formatTimeLeft(timeLeft)}.`);
+      } else {
+        setMenuPlayButtonsDisabled(false);
+        if (entry.offenses > 0) {
+          setMenuStatus(`Warnings: ${entry.offenses}/4.`);
+        } else {
+          setMenuStatus("");
+        }
+      }
+    }
+
+    function startModerationTicker() {
+      if (moderationTimer) {
+        clearInterval(moderationTimer);
+      }
+
+      moderationTimer = window.setInterval(() => {
+        if (currentSession?.username) {
+          updateMenuModerationStatus();
+        }
+      }, 1000);
+    }
+
+    function showGameNotice(message) {
+      gameNote.textContent = message;
+    }
+
+    function loadChatHistory() {
+      return [];
+    }
+
+    function saveChatHistory() {}
+
+    function clearChatHistory() {
+      chatLog.innerHTML = "";
+    }
+
+    function loadPublishedGames() {
+      try {
+        return JSON.parse(localStorage.getItem(GAMES_KEY) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function savePublishedGames(games) {
+      localStorage.setItem(GAMES_KEY, JSON.stringify(games));
+    }
+
+    function loadUserRegistry() {
+      try {
+        return JSON.parse(localStorage.getItem(USER_REGISTRY_KEY) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function registerKnownUser(username) {
+      if (!username) {
+        return;
+      }
+      const users = loadUserRegistry();
+      if (!users.includes(username)) {
+        users.push(username);
+        localStorage.setItem(USER_REGISTRY_KEY, JSON.stringify(users.sort((a, b) => a.localeCompare(b))));
+      }
+    }
+
+    function getPublishedGame(gameId) {
+      return loadPublishedGames().find((game) => game.id === gameId) || null;
+    }
+
+    function upsertPublishedGame(gameData) {
+      const games = loadPublishedGames();
+      const index = games.findIndex((game) => game.id === gameData.id);
+      if (index >= 0) {
+        games[index] = gameData;
+      } else {
+        games.push(gameData);
+      }
+      savePublishedGames(games);
+    }
+
+    function createDefaultGameData(name = "New Game") {
+      return {
+        id: crypto.randomUUID(),
+        name,
+        shared: true,
+        published: false,
+        publishedAt: Date.now(),
+        objects: [
+          {
+            id: crypto.randomUUID(),
+            type: "baseplate",
+            position: { x: 0, y: -0.5, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            scale: { x: 220, y: 1, z: 220 },
+            color: "#6cbd45"
+          },
+          {
+            id: crypto.randomUUID(),
+            type: "spawn",
+            position: { x: 0, y: 1.1, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            scale: { x: 1, y: 1, z: 1 },
+            color: "#f2d14f"
+          }
+        ]
+      };
+    }
+
+    function renderGamesMenu() {
+      gamesGrid.innerHTML = "";
+
+      const makeCard = (title, subtitle, onPlay, extraButton = null) => {
+        const card = document.createElement("div");
+        card.className = "game-card";
+        card.innerHTML = `
+          <div class="game-info">
+            <div>
+              <strong>${title}</strong>
+              <span>${subtitle}</span>
+            </div>
+            <div class="game-actions"></div>
+          </div>
+        `;
+
+        const actions = card.querySelector(".game-actions");
+        const playButton = document.createElement("button");
+        playButton.className = "button menu-play-button";
+        playButton.type = "button";
+        playButton.textContent = "Play";
+        playButton.addEventListener("click", onPlay);
+        actions.appendChild(playButton);
+
+        if (extraButton) {
+          actions.appendChild(extraButton);
+        }
+
+        gamesGrid.appendChild(card);
+      };
+
+        makeCard("Baseplate", "Preview", () => beginGame(null));
+
+      loadPublishedGames().filter((game) => game.published).forEach((game) => {
+        const editButton = document.createElement("button");
+        editButton.className = "button secondary";
+        editButton.type = "button";
+        editButton.textContent = "Edit";
+        editButton.addEventListener("click", () => openStudio(game.id));
+
+        makeCard(game.name, game.shared ? "Shared game" : "Published game", () => beginGame(game), editButton);
+      });
+
+      updateMenuModerationStatus();
+    }
+
+    function renderStudioSavedGames() {
+      studioSavedList.innerHTML = "";
+      const games = loadPublishedGames().sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
+
+      if (!games.length) {
+        const empty = document.createElement("div");
+        empty.className = "small";
+        empty.textContent = "No saved games yet.";
+        studioSavedList.appendChild(empty);
+        return;
+      }
+
+      games.forEach((game) => {
+        const item = document.createElement("div");
+        item.className = "friend-item";
+        const status = game.published ? "Published" : "Saved draft";
+        item.innerHTML = `
+          <div>
+            <strong>${game.name}</strong>
+            <span>${status}${game.shared ? " • Shared" : ""}</span>
+          </div>
+        `;
+
+        const editButton = document.createElement("button");
+        editButton.className = "button secondary";
+        editButton.type = "button";
+        editButton.textContent = "Edit";
+        editButton.addEventListener("click", () => openStudio(game.id));
+        item.appendChild(editButton);
+        studioSavedList.appendChild(item);
+      });
+    }
+
+    function loadFriendState() {
+      try {
+        return JSON.parse(localStorage.getItem(FRIEND_STATE_KEY) || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function saveFriendState(state) {
+      localStorage.setItem(FRIEND_STATE_KEY, JSON.stringify(state));
+    }
+
+    function ensureFriendBucket(state, username) {
+      if (!state[username]) {
+        state[username] = {
+          friends: [],
+          incoming: [],
+          outgoing: []
+        };
+      }
+      return state[username];
+    }
+
+    function uniqueNames(list) {
+      return [...new Set(list.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    }
+
+    function getFriendData(username) {
+      const state = loadFriendState();
+      const bucket = ensureFriendBucket(state, username);
+      bucket.friends = uniqueNames(bucket.friends);
+      bucket.incoming = uniqueNames(bucket.incoming.filter((name) => !bucket.friends.includes(name)));
+      bucket.outgoing = uniqueNames(bucket.outgoing.filter((name) => !bucket.friends.includes(name)));
+      saveFriendState(state);
+      return bucket;
+    }
+
+    function sendFriendRequest(fromUser, toUser) {
+      toUser = toUser.trim();
+      const state = loadFriendState();
+      const fromBucket = ensureFriendBucket(state, fromUser);
+      const toBucket = ensureFriendBucket(state, toUser);
+
+      if (fromUser === toUser) {
+        return "You cannot add yourself.";
+      }
+
+      if (!loadUserRegistry().includes(toUser)) {
+        return "That user does not exist yet.";
+      }
+
+      if (fromBucket.friends.includes(toUser)) {
+        return "Already friends.";
+      }
+
+      if (fromBucket.outgoing.includes(toUser)) {
+        return "Request already sent.";
+      }
+
+      if (fromBucket.incoming.includes(toUser)) {
+        acceptFriendRequest(fromUser, toUser);
+        return "Friend request accepted.";
+      }
+
+      fromBucket.outgoing = uniqueNames([...fromBucket.outgoing, toUser]);
+      toBucket.incoming = uniqueNames([...toBucket.incoming, fromUser]);
+      saveFriendState(state);
+      return "Friend request sent.";
+    }
+
+    function acceptFriendRequest(username, fromUser) {
+      const state = loadFriendState();
+      const userBucket = ensureFriendBucket(state, username);
+      const fromBucket = ensureFriendBucket(state, fromUser);
+
+      if (!userBucket.incoming.includes(fromUser)) {
+        saveFriendState(state);
+        return;
+      }
+
+      userBucket.incoming = userBucket.incoming.filter((name) => name !== fromUser);
+      userBucket.outgoing = userBucket.outgoing.filter((name) => name !== fromUser);
+      fromBucket.incoming = fromBucket.incoming.filter((name) => name !== username);
+      fromBucket.outgoing = fromBucket.outgoing.filter((name) => name !== username);
+
+      userBucket.friends = uniqueNames([...userBucket.friends, fromUser]);
+      fromBucket.friends = uniqueNames([...fromBucket.friends, username]);
+      saveFriendState(state);
+    }
+
+    function declineFriendRequest(username, fromUser) {
+      const state = loadFriendState();
+      const userBucket = ensureFriendBucket(state, username);
+      const fromBucket = ensureFriendBucket(state, fromUser);
+      userBucket.incoming = userBucket.incoming.filter((name) => name !== fromUser);
+      fromBucket.outgoing = fromBucket.outgoing.filter((name) => name !== username);
+      saveFriendState(state);
+    }
+
+    function removeFriend(username, friendName) {
+      const state = loadFriendState();
+      const userBucket = ensureFriendBucket(state, username);
+      const friendBucket = ensureFriendBucket(state, friendName);
+      userBucket.friends = userBucket.friends.filter((name) => name !== friendName);
+      friendBucket.friends = friendBucket.friends.filter((name) => name !== username);
+      userBucket.outgoing = userBucket.outgoing.filter((name) => name !== friendName);
+      userBucket.incoming = userBucket.incoming.filter((name) => name !== friendName);
+      friendBucket.outgoing = friendBucket.outgoing.filter((name) => name !== username);
+      friendBucket.incoming = friendBucket.incoming.filter((name) => name !== username);
+      saveFriendState(state);
+    }
+
+    function loadPresenceState() {
+      try {
+        return JSON.parse(localStorage.getItem(PRESENCE_KEY) || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function setPresence(inGame, gameData = null) {
+      if (!currentSession?.username) {
+        return;
+      }
+
+      const presence = loadPresenceState();
+      presence[currentSession.username] = {
+        displayName: currentSession.displayName,
+        inGame,
+        room: inGame ? ROOM_ID : "",
+        game: inGame ? (gameData?.name || "Baseplate") : "",
+        gameId: inGame ? (gameData?.id || "baseplate") : "",
+        updatedAt: Date.now()
+      };
+      localStorage.setItem(PRESENCE_KEY, JSON.stringify(presence));
+    }
+
+    function clearPresence(username) {
+      if (!username) {
+        return;
+      }
+
+      const presence = loadPresenceState();
+      delete presence[username];
+      localStorage.setItem(PRESENCE_KEY, JSON.stringify(presence));
+    }
+
+    function renderFriends() {
+      if (!currentSession) {
+        friendStrip.innerHTML = "";
+        friendList.innerHTML = "";
+        friendHint.style.display = "block";
+        return;
+      }
+
+      const friendData = getFriendData(currentSession.username);
+      const presence = loadPresenceState();
+      const friends = friendData.friends;
+      const incoming = friendData.incoming;
+      const outgoing = friendData.outgoing;
+
+      friendStrip.innerHTML = "";
+      friendList.innerHTML = "";
+
+      if (!friends.length && !incoming.length && !outgoing.length) {
+        friendHint.style.display = "block";
+        return;
+      }
+
+      friendHint.style.display = "none";
+
+      const totalSlots = Math.max(7, friends.length || 0);
+      for (let index = 0; index < totalSlots; index += 1) {
+        const friendName = friends[index];
+        const slot = document.createElement("div");
+        slot.className = "friend-slot";
+        if (friendName) {
+          const friendPresence = presence[friendName];
+          slot.innerHTML = `
+            <strong>${index + 1}. ${friendName}</strong>
+            <span>${friendPresence?.inGame ? "In Baseplate" : "Offline"}</span>
+          `;
+
+          if (friendPresence?.inGame) {
+            const joinButton = document.createElement("button");
+            joinButton.className = "button";
+            joinButton.type = "button";
+            joinButton.textContent = "Join";
+            joinButton.addEventListener("click", () => {
+              const gameToJoin = friendPresence.gameId && friendPresence.gameId !== "baseplate"
+                ? getPublishedGame(friendPresence.gameId)
+                : null;
+              beginGame(gameToJoin);
+            });
+            slot.appendChild(joinButton);
+          }
+
+          const unfriendButton = document.createElement("button");
+          unfriendButton.className = "button secondary";
+          unfriendButton.type = "button";
+          unfriendButton.textContent = "Unfriend";
+          unfriendButton.addEventListener("click", () => {
+            removeFriend(currentSession.username, friendName);
+            renderFriends();
+            renderPlayerMenu();
+          });
+          slot.appendChild(unfriendButton);
+        } else {
+          slot.innerHTML = `<strong>${index + 1}</strong><span>Empty</span>`;
+        }
+        friendStrip.appendChild(slot);
+      }
+
+      incoming.forEach((friendName) => {
+        const item = document.createElement("div");
+        item.className = "friend-item";
+
+        const meta = document.createElement("div");
+        meta.className = "friend-meta";
+        meta.innerHTML = `<strong>${friendName}</strong><span>Incoming request</span>`;
+
+        const actions = document.createElement("div");
+        actions.className = "friend-request-actions";
+
+        const acceptButton = document.createElement("button");
+        acceptButton.className = "button";
+        acceptButton.type = "button";
+        acceptButton.textContent = "Accept";
+        acceptButton.addEventListener("click", () => {
+          acceptFriendRequest(currentSession.username, friendName);
+          renderFriends();
+        });
+
+        const declineButton = document.createElement("button");
+        declineButton.className = "button secondary";
+        declineButton.type = "button";
+        declineButton.textContent = "Decline";
+        declineButton.addEventListener("click", () => {
+          declineFriendRequest(currentSession.username, friendName);
+          renderFriends();
+        });
+
+        actions.append(acceptButton, declineButton);
+        item.append(meta, actions);
+        friendList.appendChild(item);
+      });
+
+      outgoing.forEach((friendName) => {
+        const item = document.createElement("div");
+        item.className = "friend-item";
+
+        const meta = document.createElement("div");
+        meta.className = "friend-meta";
+        meta.innerHTML = `<strong>${friendName}</strong><span>Request sent</span>`;
+
+        const cancelButton = document.createElement("button");
+        cancelButton.className = "button secondary";
+        cancelButton.type = "button";
+        cancelButton.textContent = "Cancel";
+        cancelButton.addEventListener("click", () => {
+          declineFriendRequest(friendName, currentSession.username);
+          renderFriends();
+        });
+
+        item.append(meta, cancelButton);
+        friendList.appendChild(item);
+      });
+
+      if (!incoming.length && !outgoing.length && friends.length) {
+        const item = document.createElement("div");
+        item.className = "friend-item";
+        item.innerHTML = `<div class="friend-meta"><strong>Friends</strong><span>Use the numbered slots above to join or manage friends.</span></div>`;
+        friendList.appendChild(item);
+      }
+    }
+
+    function renderPlayerMenu() {
+      if (!currentSession) {
+        playerMenuList.innerHTML = "";
+        return;
+      }
+
+      const presence = loadPresenceState();
+      const friendData = getFriendData(currentSession.username);
+      const friends = new Set(friendData.friends);
+      playerMenuList.innerHTML = "";
+
+      const addRow = (username, displayName, self = false) => {
+        const row = document.createElement("div");
+        row.className = "player-row";
+
+        const meta = document.createElement("div");
+        const online = presence[username]?.inGame;
+        const gameName = presence[username]?.game;
+        meta.innerHTML = `<strong>${displayName}</strong><span>${self ? "You" : username}${online ? ` • ${gameName}` : ""}</span>`;
+        row.appendChild(meta);
+
+        if (!self) {
+          const friendButton = document.createElement("button");
+          friendButton.className = "button";
+          friendButton.type = "button";
+          friendButton.textContent = friends.has(username) ? "Friended" : "Friend";
+          friendButton.disabled = friends.has(username);
+          friendButton.addEventListener("click", () => {
+            friendHint.textContent = sendFriendRequest(currentSession.username, username);
+            friendHint.style.display = "block";
+            renderFriends();
+            renderPlayerMenu();
+          });
+          row.appendChild(friendButton);
+
+          const unfriendButton = document.createElement("button");
+          unfriendButton.className = "button secondary";
+          unfriendButton.type = "button";
+          unfriendButton.textContent = "Unfriend";
+          unfriendButton.disabled = !friends.has(username);
+          unfriendButton.addEventListener("click", () => {
+            removeFriend(currentSession.username, username);
+            renderFriends();
+            renderPlayerMenu();
+          });
+          row.appendChild(unfriendButton);
+        }
+
+        playerMenuList.appendChild(row);
+      };
+
+      addRow(currentSession.username, currentSession.displayName || currentSession.username, true);
+      gameState.remotePlayers.forEach((remote) => {
+        addRow(remote.state.username, remote.state.displayName || remote.state.username, false);
+      });
+    }
+
+    function showScreen(screen) {
+      authScreen.classList.remove("active");
+      menuScreen.classList.remove("active");
+      ingameScreen.classList.remove("active");
+      studioScreen.classList.remove("active");
+      screen.classList.add("active");
+    }
+
+    function showMenu(session) {
+      currentSession = session;
+      registerKnownUser(session.username);
+      currentSession.avatar = normalizeAvatarData(session.avatar || DEFAULT_AVATAR);
+      menuDisplayName.textContent = session.displayName || session.username || "Player";
+      menuUsername.textContent = `@${session.username || "username"}`;
+      playerIcon.textContent = (session.displayName || session.username || "M").charAt(0).toUpperCase();
+      syncAvatarEditor(currentSession.avatar);
+      currentGameData = null;
+      setPresence(false, null);
+      renderGamesMenu();
+      renderFriends();
+      renderPlayerMenu();
+      updateMenuModerationStatus();
+      showScreen(menuScreen);
+    }
+
+    function getErrorMessage(errorData) {
+      if (!errorData) {
+        return "Something went wrong.";
+      }
+
+      if (typeof errorData === "string") {
+        return errorData;
+      }
+
+      return (
+        errorData.errorMessage ||
+        errorData.error ||
+        (errorData.errorDetails && Object.values(errorData.errorDetails).flat().join(" ")) ||
+        "Something went wrong."
+      );
+    }
+
+    async function callPlayFab(endpoint, payload, sessionTicket = "") {
+      const headers = {
+        "Content-Type": "application/json",
+        "X-PlayFabSDK": "Meepblox/1.0"
+      };
+
+      if (sessionTicket) {
+        headers["X-Authorization"] = sessionTicket;
+      }
+
+      const response = await fetch(`${API_BASE}/${endpoint}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          TitleId: TITLE_ID,
+          ...payload
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.status === "Error" || data.code >= 400) {
+        throw new Error(getErrorMessage(data));
+      }
+
+      return data.data || data;
+    }
+
+    async function updateDisplayName(sessionTicket, displayName) {
+      if (!sessionTicket || !displayName) {
+        return;
+      }
+
+      await callPlayFab("UpdateUserTitleDisplayName", { DisplayName: displayName }, sessionTicket);
+    }
+
+    function normalizeAvatarData(data = {}) {
+      return {
+        hat: ["none", "topHat", "baseballCap", "pizzaHat"].includes(data.hat) ? data.hat : "none",
+        shirtColor: /^#[0-9a-f]{6}$/i.test(data.shirtColor || "") ? data.shirtColor : DEFAULT_AVATAR.shirtColor,
+        pantsColor: /^#[0-9a-f]{6}$/i.test(data.pantsColor || "") ? data.pantsColor : DEFAULT_AVATAR.pantsColor
+      };
+    }
+
+    function getLocalPlayerDataKey(username) {
+      return `meepbloxPlayerData:${username}`;
+    }
+
+    function saveLocalPlayerData(username, avatar) {
+      if (!username) {
+        return;
+      }
+      localStorage.setItem(getLocalPlayerDataKey(username), JSON.stringify(normalizeAvatarData(avatar)));
+    }
+
+    function loadLocalPlayerData(username) {
+      if (!username) {
+        return { ...DEFAULT_AVATAR };
+      }
+      try {
+        return normalizeAvatarData(JSON.parse(localStorage.getItem(getLocalPlayerDataKey(username)) || "null") || DEFAULT_AVATAR);
+      } catch {
+        return { ...DEFAULT_AVATAR };
+      }
+    }
+
+    async function loadPlayerData(sessionTicket, username) {
+      if (!sessionTicket) {
+        return loadLocalPlayerData(username);
+      }
+
+      try {
+        const data = await callPlayFab("GetUserData", { Keys: [PLAYER_DATA_KEY] }, sessionTicket);
+        const rawValue = data.Data?.[PLAYER_DATA_KEY]?.Value;
+        const avatar = normalizeAvatarData(rawValue ? JSON.parse(rawValue) : DEFAULT_AVATAR);
+        saveLocalPlayerData(username, avatar);
+        return avatar;
+      } catch {
+        return loadLocalPlayerData(username);
+      }
+    }
+
+    async function savePlayerData(session, avatar) {
+      const normalized = normalizeAvatarData(avatar);
+      saveLocalPlayerData(session?.username, normalized);
+      if (!session?.sessionTicket) {
+        return normalized;
+      }
+
+      try {
+        await callPlayFab("UpdateUserData", {
+          Data: {
+            [PLAYER_DATA_KEY]: JSON.stringify(normalized)
+          },
+          Permission: "Public"
+        }, session.sessionTicket);
+      } catch {
+        return normalized;
+      }
+
+      return normalized;
+    }
+
+    function syncAvatarEditor(avatar = DEFAULT_AVATAR) {
+      const normalized = normalizeAvatarData(avatar);
+      avatarHatSelect.value = normalized.hat;
+      avatarShirtColor.value = normalized.shirtColor;
+      avatarPantsColor.value = normalized.pantsColor;
+    }
+
+    function readAvatarEditor() {
+      return normalizeAvatarData({
+        hat: avatarHatSelect.value,
+        shirtColor: avatarShirtColor.value,
+        pantsColor: avatarPantsColor.value
+      });
+    }
+
+    createTab.addEventListener("click", () => setAuthTab("create"));
+    loginTab.addEventListener("click", () => setAuthTab("login"));
+
+    createForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearAuthStatus();
+
+      const username = document.getElementById("createUsername").value.trim();
+      const displayName = document.getElementById("createDisplayName").value.trim();
+      const password = document.getElementById("createPassword").value;
+
+      if (!username || !displayName || !password) {
+        showAuthStatus("Fill in username, display name, and password.", "error");
+        return;
+      }
+
+      createButton.disabled = true;
+      createButton.textContent = "Creating...";
+
+      try {
+        const registerData = await callPlayFab("RegisterPlayFabUser", {
+          Username: username,
+          Password: password,
+          DisplayName: displayName,
+          RequireBothUsernameAndEmail: false
+        });
+
+        let sessionTicket = registerData.SessionTicket || "";
+        if (!sessionTicket) {
+          const loginData = await callPlayFab("LoginWithPlayFab", {
+            Username: username,
+            Password: password
+          });
+          sessionTicket = loginData.SessionTicket || "";
+        }
+
+        await updateDisplayName(sessionTicket, displayName);
+
+        const avatar = await loadPlayerData(sessionTicket, username);
+        registerKnownUser(username);
+        const session = { username, displayName, sessionTicket, avatar };
+        saveSession(session);
+        showMenu(session);
+      } catch (error) {
+        showAuthStatus(error.message, "error");
+      } finally {
+        createButton.disabled = false;
+        createButton.textContent = "Create Account";
+      }
+    });
+
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearAuthStatus();
+
+      const username = document.getElementById("loginUsername").value.trim();
+      const password = document.getElementById("loginPassword").value;
+
+      if (!username || !password) {
+        showAuthStatus("Enter username and password.", "error");
+        return;
+      }
+
+      loginButton.disabled = true;
+      loginButton.textContent = "Logging in...";
+
+      try {
+        const loginData = await callPlayFab("LoginWithPlayFab", {
+          Username: username,
+          Password: password,
+          InfoRequestParameters: {
+            GetUserAccountInfo: true,
+            GetPlayerProfile: true
+          }
+        });
+
+        const accountInfo = loginData.InfoResultPayload?.AccountInfo || {};
+        const displayName =
+          accountInfo.TitleInfo?.DisplayName ||
+          loginData.InfoResultPayload?.PlayerProfile?.DisplayName ||
+          username;
+
+        const avatar = await loadPlayerData(loginData.SessionTicket || "", username);
+        registerKnownUser(username);
+        const session = {
+          username,
+          displayName,
+          sessionTicket: loginData.SessionTicket || "",
+          avatar
+        };
+
+        saveSession(session);
+        showMenu(session);
+      } catch (error) {
+        showAuthStatus(error.message, "error");
+      } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = "Login";
+      }
+    });
+
+    friendForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!currentSession) {
+        return;
+      }
+
+      const value = friendInput.value.trim();
+      if (!value) {
+        return;
+      }
+
+      const message = sendFriendRequest(currentSession.username, value);
+      friendInput.value = "";
+      renderFriends();
+      friendHint.textContent = message;
+      friendHint.style.display = "block";
+    });
+
+    const multiplayer = {
+      clientId: crypto.randomUUID(),
+      channel: null,
+      lastSendAt: 0
+    };
+
+    const scratch = {
+      moveVector: new THREE.Vector3(),
+      cameraForward: new THREE.Vector3(),
+      cameraRight: new THREE.Vector3(),
+      cameraOffset: new THREE.Vector3(),
+      worldTarget: new THREE.Vector3(),
+      worldLook: new THREE.Vector3()
+    };
+
+    const gameState = {
+      started: false,
+      dead: false,
+      respawnAt: 0,
+      scene: null,
+      camera: null,
+      renderer: null,
+      clock: null,
+      localPlayer: null,
+      labels: new Map(),
+      remotePlayers: new Map(),
+      colliders: [],
+      pieces: [],
+      markers: [],
+      spawnPoint: new THREE.Vector3(0, 0, 0),
+      baseplateSize: 220,
+      cameraYaw: 0,
+      cameraPitch: 0.34,
+      zoom: 10,
+      minZoom: 0,
+      maxZoom: 18,
+      mouseSensitivity: 0.004,
+      pointerLocked: false,
+      fixedStep: 1 / 60,
+      accumulator: 0,
+      lastFrameTime: 0,
+      input: {
+        forward: false,
+        back: false,
+        left: false,
+        right: false,
+        jump: false,
+        rightMouse: false
+      },
+      keysBound: false,
+      animationFrame: 0
+    };
+
+    const studioState = {
+      open: false,
+      gameId: "",
+      shared: false,
+      published: false,
+      scene: null,
+      camera: null,
+      renderer: null,
+      animationFrame: 0,
+      objects: [],
+      meshes: new Map(),
+      selectedId: "",
+      channel: null,
+      syncing: false,
+      cameraTarget: new THREE.Vector3(0, 2.5, 0),
+      cameraYaw: 0.25,
+      cameraPitch: 0.55,
+      zoom: 28,
+      leftMouse: false,
+      rightMouse: false,
+      input: {
+        forward: false,
+        back: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false
+      },
+      moveSnap: true,
+      rotateSnap: true,
+      scaleSnap: true,
+      tool: "move",
+      raycaster: new THREE.Raycaster(),
+      pointer: new THREE.Vector2(),
+      dragPlane: new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
+      dragPoint: new THREE.Vector3(),
+      dragOffset: new THREE.Vector3(),
+      dragging: false,
+      gizmoGroup: null,
+      gizmoHandles: [],
+      activeAxis: "",
+      dragStartMouseX: 0,
+      dragStartMouseY: 0,
+      dragStartScale: null,
+      dragStartPosition: null,
+      dragStartRotation: null
+    };
+
+    function createHatMesh(hatType) {
+      const hat = new THREE.Group();
+
+      if (hatType === "topHat") {
+        const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.08, 20), new THREE.MeshLambertMaterial({ color: 0x171717 }));
+        const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 0.7, 20), new THREE.MeshLambertMaterial({ color: 0x232323 }));
+        crown.position.y = 0.36;
+        hat.add(brim, crown);
+      } else if (hatType === "baseballCap") {
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 14, 0, Math.PI * 2, 0, Math.PI * 0.62), new THREE.MeshLambertMaterial({ color: 0xc03f35 }));
+        const brim = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.24), new THREE.MeshLambertMaterial({ color: 0x8e2720 }));
+        dome.rotation.x = Math.PI;
+        dome.position.y = 0.1;
+        brim.position.set(0, 0.02, 0.38);
+        hat.add(dome, brim);
+      } else if (hatType === "pizzaHat") {
+        const slice = new THREE.Mesh(new THREE.ConeGeometry(0.46, 0.38, 3), new THREE.MeshLambertMaterial({ color: 0xf3c86a }));
+        const crust = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.08, 18, 1, false, 0, Math.PI), new THREE.MeshLambertMaterial({ color: 0xb87438 }));
+        const pepperoni1 = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.03, 12), new THREE.MeshLambertMaterial({ color: 0xb3392b }));
+        const pepperoni2 = pepperoni1.clone();
+        slice.rotation.y = Math.PI;
+        slice.rotation.x = Math.PI / 2;
+        crust.rotation.x = Math.PI / 2;
+        crust.position.set(0, 0.02, -0.02);
+        pepperoni1.rotation.x = Math.PI / 2;
+        pepperoni2.rotation.x = Math.PI / 2;
+        pepperoni1.position.set(-0.12, 0.08, 0.08);
+        pepperoni2.position.set(0.1, 0.08, 0.16);
+        hat.add(slice, crust, pepperoni1, pepperoni2);
+      }
+
+      hat.position.y = 0.6;
+      return hat;
+    }
+
+    function applyAvatarCosmetics(avatar, cosmetics = DEFAULT_AVATAR) {
+      const normalized = normalizeAvatarData(cosmetics);
+      const { torso, leftLeg, rightLeg, head } = avatar.userData.parts;
+      torso.material.color.set(normalized.shirtColor);
+      leftLeg.material.color.set(normalized.pantsColor);
+      rightLeg.material.color.set(normalized.pantsColor);
+
+      if (avatar.userData.hatMesh) {
+        head.remove(avatar.userData.hatMesh);
+        avatar.userData.hatMesh = null;
+      }
+
+      if (normalized.hat !== "none") {
+        const hat = createHatMesh(normalized.hat);
+        head.add(hat);
+        avatar.userData.hatMesh = hat;
+      }
+
+      avatar.userData.avatar = normalized;
+    }
+
+    function createNoobAvatar(name = "Player", cosmetics = DEFAULT_AVATAR) {
+      const avatar = new THREE.Group();
+      avatar.userData.name = name;
+
+      const boxMaterial = (color) => new THREE.MeshLambertMaterial({ color });
+      const createBox = (w, h, d, material) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        return mesh;
+      };
+
+      const head = new THREE.Mesh(
+        new THREE.BoxGeometry(0.92, 0.92, 0.92),
+        boxMaterial(0xf2d14f)
+      );
+      head.castShadow = true;
+      head.receiveShadow = true;
+      head.position.set(0, 3.05, 0);
+
+      const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x111111 });
+      const smileMaterial = new THREE.MeshBasicMaterial({ color: 0x111111 });
+
+      const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMaterial);
+      leftEye.position.set(-0.18, 0.1, 0.47);
+      const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMaterial);
+      rightEye.position.set(0.18, 0.1, 0.47);
+
+      const smile = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.018, 10, 24, Math.PI), smileMaterial);
+      smile.rotation.z = Math.PI;
+      smile.position.set(0, -0.08, 0.47);
+
+      head.add(leftEye, rightEye, smile);
+
+      const torso = createBox(1.35, 1.45, 0.82, boxMaterial(0x1b66cc));
+      torso.position.set(0, 1.95, 0);
+
+      const leftArm = createBox(0.48, 1.45, 0.48, boxMaterial(0xf2d14f));
+      leftArm.position.set(-0.95, 1.95, 0);
+
+      const rightArm = createBox(0.48, 1.45, 0.48, boxMaterial(0xf2d14f));
+      rightArm.position.set(0.95, 1.95, 0);
+
+      const leftLeg = createBox(0.52, 1.45, 0.52, boxMaterial(0x9bbc4b));
+      leftLeg.position.set(-0.3, 0.72, 0);
+
+      const rightLeg = createBox(0.52, 1.45, 0.52, boxMaterial(0x9bbc4b));
+      rightLeg.position.set(0.3, 0.72, 0);
+
+      avatar.add(head, torso, leftArm, rightArm, leftLeg, rightLeg);
+      avatar.position.set(0, 0, 0);
+      avatar.userData.parts = { head, torso, leftArm, rightArm, leftLeg, rightLeg };
+      avatar.userData.baseY = {
+        head: head.position.y,
+        torso: torso.position.y,
+        leftArm: leftArm.position.y,
+        rightArm: rightArm.position.y,
+        leftLeg: leftLeg.position.y,
+        rightLeg: rightLeg.position.y
+      };
+      avatar.userData.verticalVelocity = 0;
+      avatar.userData.grounded = true;
+      avatar.userData.walkPhase = 0;
+      avatar.userData.lastPosition = avatar.position.clone();
+      avatar.userData.targetPosition = avatar.position.clone();
+      avatar.userData.chatText = "";
+      avatar.userData.chatUntil = 0;
+      avatar.userData.chatTyping = false;
+      avatar.userData.hatMesh = null;
+      applyAvatarCosmetics(avatar, cosmetics);
+      return avatar;
+    }
+
+    function applyAvatarAnimation(avatar, delta, moveAmount, isAirborne) {
+      const parts = avatar.userData.parts;
+      if (!parts) {
+        return;
+      }
+
+      const strideAmount = Math.min(moveAmount, 1);
+      avatar.userData.walkPhase += delta * (strideAmount > 0.04 ? 7.5 : 2.4) * Math.max(strideAmount, 0.25);
+      const phase = avatar.userData.walkPhase;
+      const armSwing = Math.sin(phase) * 0.58 * strideAmount;
+      const legSwing = Math.sin(phase) * 0.5 * strideAmount;
+      const bob = strideAmount > 0.05 ? Math.abs(Math.sin(phase * 2)) * 0.03 : 0;
+
+      if (isAirborne) {
+        parts.leftArm.rotation.x = THREE.MathUtils.lerp(parts.leftArm.rotation.x, -0.18, 0.22);
+        parts.rightArm.rotation.x = THREE.MathUtils.lerp(parts.rightArm.rotation.x, -0.18, 0.22);
+        parts.leftLeg.rotation.x = THREE.MathUtils.lerp(parts.leftLeg.rotation.x, 0.16, 0.22);
+        parts.rightLeg.rotation.x = THREE.MathUtils.lerp(parts.rightLeg.rotation.x, 0.16, 0.22);
+      } else {
+        parts.leftArm.rotation.x = THREE.MathUtils.lerp(parts.leftArm.rotation.x, armSwing, 0.32);
+        parts.rightArm.rotation.x = THREE.MathUtils.lerp(parts.rightArm.rotation.x, -armSwing, 0.32);
+        parts.leftLeg.rotation.x = THREE.MathUtils.lerp(parts.leftLeg.rotation.x, -legSwing, 0.32);
+        parts.rightLeg.rotation.x = THREE.MathUtils.lerp(parts.rightLeg.rotation.x, legSwing, 0.32);
+      }
+
+      parts.head.position.y = avatar.userData.baseY.head + bob;
+      parts.torso.position.y = avatar.userData.baseY.torso + bob * 0.8;
+      parts.leftArm.position.y = avatar.userData.baseY.leftArm + bob;
+      parts.rightArm.position.y = avatar.userData.baseY.rightArm + bob;
+      parts.leftLeg.position.y = avatar.userData.baseY.leftLeg;
+      parts.rightLeg.position.y = avatar.userData.baseY.rightLeg;
+    }
+
+    function createPropMesh(objectData) {
+      let geometry;
+      const color = objectData.color || "#d67f4f";
+
+      if (objectData.type === "baseplate") {
+        geometry = new THREE.BoxGeometry(1, 1, 1);
+      } else if (objectData.type === "sphere") {
+        geometry = new THREE.SphereGeometry(0.5, 20, 16);
+      } else if (objectData.type === "cylinder") {
+        geometry = new THREE.CylinderGeometry(0.45, 0.45, 1, 18);
+      } else if (objectData.type === "spawn") {
+        geometry = new THREE.CylinderGeometry(0.7, 0.7, 0.2, 18);
+      } else {
+        geometry = new THREE.BoxGeometry(1, 1, 1);
+      }
+
+      const material = new THREE.MeshLambertMaterial({
+        color: objectData.type === "spawn" ? 0xf2d14f : color
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      return mesh;
+    }
+
+    function ensureLabel(id, text) {
+      let label = gameState.labels.get(id);
+      if (!label) {
+        label = document.createElement("div");
+        label.className = "hud-label";
+        const chat = document.createElement("span");
+        chat.className = "hud-chat";
+        const name = document.createElement("span");
+        name.className = "hud-name";
+        label.append(chat, name);
+        labelLayer.appendChild(label);
+        gameState.labels.set(id, label);
+      }
+      label.querySelector(".hud-name").textContent = text;
+      return label;
+    }
+
+    function removeLabel(id) {
+      const label = gameState.labels.get(id);
+      if (label) {
+        label.remove();
+        gameState.labels.delete(id);
+      }
+    }
+
+    function createWorld(gameData = null) {
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x86c5ff);
+      scene.fog = new THREE.Fog(0x86c5ff, 110, 230);
+
+      const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 500);
+      const renderer = new THREE.WebGLRenderer({ canvas: gameCanvas, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const ambient = new THREE.AmbientLight(0xffffff, 0.68);
+      scene.add(ambient);
+
+      const sun = new THREE.DirectionalLight(0xffffff, 1.1);
+      sun.position.set(36, 60, 28);
+      sun.castShadow = true;
+      sun.shadow.mapSize.width = 2048;
+      sun.shadow.mapSize.height = 2048;
+      sun.shadow.camera.left = -160;
+      sun.shadow.camera.right = 160;
+      sun.shadow.camera.top = 160;
+      sun.shadow.camera.bottom = -160;
+      scene.add(sun);
+
+      const ground = new THREE.Mesh(
+        new THREE.BoxGeometry(gameState.baseplateSize, 1, gameState.baseplateSize),
+        new THREE.MeshLambertMaterial({ color: 0x6cbd45 })
+      );
+      ground.position.y = -0.5;
+      ground.receiveShadow = true;
+      if (!gameData) {
+        scene.add(ground);
+      }
+
+      const grid = new THREE.GridHelper(gameState.baseplateSize, 40, 0xffffff, 0xffffff);
+      grid.position.y = 0.01;
+      grid.material.transparent = true;
+      grid.material.opacity = 0.1;
+      scene.add(grid);
+
+      const localPlayer = createNoobAvatar(
+        currentSession?.displayName || currentSession?.username || "Player",
+        currentSession?.avatar || DEFAULT_AVATAR
+      );
+      gameState.spawnPoint = new THREE.Vector3(0, 0, 0);
+      gameState.colliders = [];
+
+      if (gameData?.objects?.length) {
+        gameData.objects.forEach((objectData) => {
+          const mesh = createPropMesh(objectData);
+          mesh.position.set(objectData.position.x, objectData.position.y, objectData.position.z);
+          mesh.rotation.set(
+            THREE.MathUtils.degToRad(objectData.rotation.x),
+            THREE.MathUtils.degToRad(objectData.rotation.y),
+            THREE.MathUtils.degToRad(objectData.rotation.z)
+          );
+          mesh.scale.set(objectData.scale.x, objectData.scale.y, objectData.scale.z);
+          scene.add(mesh);
+          mesh.updateMatrixWorld(true);
+
+          if (objectData.type === "spawn") {
+            gameState.spawnPoint.set(objectData.position.x, Math.max(0, objectData.position.y - 1.1), objectData.position.z);
+          } else {
+            gameState.colliders.push(new THREE.Box3().setFromObject(mesh));
+          }
+        });
+      }
+
+      localPlayer.position.copy(gameState.spawnPoint);
+      scene.add(localPlayer);
+
+      gameState.scene = scene;
+      gameState.camera = camera;
+      gameState.renderer = renderer;
+      gameState.clock = new THREE.Clock();
+      gameState.localPlayer = localPlayer;
+      gameState.started = true;
+      gameState.dead = false;
+      gameState.respawnAt = 0;
+      gameState.cameraYaw = 0;
+      gameState.cameraPitch = 0.34;
+      gameState.zoom = 10;
+      gameState.accumulator = 0;
+      gameState.lastFrameTime = performance.now();
+      deathOverlay.classList.remove("show");
+    }
+
+    function openChannel() {
+      if (multiplayer.channel) {
+        multiplayer.channel.close();
+      }
+
+      multiplayer.channel = new BroadcastChannel(MULTIPLAYER_CHANNEL_NAME);
+      multiplayer.channel.onmessage = (event) => {
+        const message = event.data;
+        if (!message || message.clientId === multiplayer.clientId) {
+          return;
+        }
+
+        if (message.type === "leave") {
+          removeRemotePlayer(message.clientId);
+          return;
+        }
+
+        if (message.type === "chat") {
+          addChatMessage({
+            clientId: message.clientId,
+            username: message.username,
+            displayName: message.displayName,
+            message: message.message,
+            createdAt: message.createdAt
+          }, false);
+          return;
+        }
+
+        if (message.type === "state") {
+          upsertRemotePlayer(message);
+        }
+      };
+    }
+
+    function spawnAvatarShatter(avatar, pushScale = 1) {
+      const parts = avatar.userData.parts;
+      if (!parts) {
+        return;
+      }
+
+      Object.values(parts).forEach((part) => {
+        const piece = part.clone();
+        piece.material = Array.isArray(part.material)
+          ? part.material.map((material) => material.clone())
+          : part.material.clone();
+        piece.position.copy(part.getWorldPosition(new THREE.Vector3()));
+        piece.quaternion.copy(part.getWorldQuaternion(new THREE.Quaternion()));
+        piece.castShadow = true;
+        gameState.scene.add(piece);
+        gameState.pieces.push({
+          mesh: piece,
+          velocity: new THREE.Vector3(
+            (Math.random() - 0.5) * 3.1 * pushScale,
+            (2.1 + Math.random() * 1.1) * pushScale,
+            (Math.random() - 0.5) * 3.1 * pushScale
+          ),
+          spin: new THREE.Vector3(
+            (Math.random() - 0.5) * 6,
+            (Math.random() - 0.5) * 6,
+            (Math.random() - 0.5) * 6
+          ),
+          life: 3.25
+        });
+      });
+    }
+
+    function upsertRemotePlayer(message) {
+      let remote = gameState.remotePlayers.get(message.clientId);
+      let created = false;
+      if (!remote) {
+        const avatar = createNoobAvatar(message.displayName || message.username || "Player", message.avatar || DEFAULT_AVATAR);
+        gameState.scene.add(avatar);
+        remote = {
+          avatar,
+          state: message,
+          targetPosition: new THREE.Vector3(message.position.x, message.position.y, message.position.z),
+          chatText: "",
+          chatUntil: 0
+        };
+        avatar.position.copy(remote.targetPosition);
+        gameState.remotePlayers.set(message.clientId, remote);
+        created = true;
+      }
+
+      const wasDead = remote.state?.dead;
+      remote.state = message;
+      applyAvatarCosmetics(remote.avatar, message.avatar || DEFAULT_AVATAR);
+      remote.targetPosition.set(message.position.x, message.position.y, message.position.z);
+
+      if (!wasDead && message.dead) {
+        remote.avatar.position.copy(remote.targetPosition);
+        spawnAvatarShatter(remote.avatar, 0.9);
+        createDeathMarker(remote.targetPosition);
+      }
+
+      if (wasDead && !message.dead) {
+        remote.avatar.position.copy(remote.targetPosition);
+      }
+
+      remote.avatar.visible = !message.dead;
+      if (created || cornerPanel.classList.contains("open")) {
+        renderPlayerMenu();
+      }
+    }
+
+    function removeRemotePlayer(clientId) {
+      const remote = gameState.remotePlayers.get(clientId);
+      if (remote) {
+        gameState.scene?.remove(remote.avatar);
+        gameState.remotePlayers.delete(clientId);
+        removeLabel(clientId);
+        if (gameState.remotePlayers.size === 0) {
+          clearChatHistory();
+        }
+        renderPlayerMenu();
+      }
+    }
+
+    function sendState(force = false) {
+      if (!multiplayer.channel || !gameState.started || !gameState.localPlayer || !currentSession) {
+        return;
+      }
+
+      const now = performance.now();
+      if (!force && now - multiplayer.lastSendAt < 80) {
+        return;
+      }
+
+      multiplayer.lastSendAt = now;
+      const pos = gameState.localPlayer.position;
+      multiplayer.channel.postMessage({
+        type: "state",
+        clientId: multiplayer.clientId,
+        username: currentSession.username,
+        displayName: currentSession.displayName,
+        avatar: currentSession.avatar || DEFAULT_AVATAR,
+        dead: gameState.dead,
+        position: { x: pos.x, y: pos.y, z: pos.z },
+        rotationY: gameState.localPlayer.rotation.y
+      });
+    }
+
+    function setZoom(nextZoom) {
+      gameState.zoom = THREE.MathUtils.clamp(nextZoom, gameState.minZoom, gameState.maxZoom);
+    }
+
+    function escapeRegex(text) {
+      return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function filterChatMessage(text) {
+      const compact = text.toLowerCase().replace(/[^a-z]/g, "");
+      const matched = BAD_WORDS.some((word) => compact.includes(word));
+      return {
+        filtered: matched ? "#".repeat(text.length) : text,
+        matched
+      };
+    }
+
+    function getSpeakerState(clientId, username) {
+      if (clientId === "local") {
+        return {
+          username: currentSession?.username || username,
+          displayName: currentSession?.displayName || username || "Player",
+          state: gameState.localPlayer?.userData
+        };
+      }
+
+      const remote = gameState.remotePlayers.get(clientId);
+      if (!remote) {
+        return null;
+      }
+
+      return {
+        username: remote.state.username,
+        displayName: remote.state.displayName || remote.state.username,
+        state: remote
+      };
+    }
+
+    function setOverheadChat(targetId, message) {
+      const now = Date.now();
+      if (targetId === "local" && gameState.localPlayer) {
+        gameState.localPlayer.userData.chatText = message;
+        gameState.localPlayer.userData.chatUntil = now + 10000;
+        gameState.localPlayer.userData.chatTyping = false;
+        return;
+      }
+
+      const remote = gameState.remotePlayers.get(targetId);
+      if (remote) {
+        remote.chatText = message;
+        remote.chatUntil = now + 10000;
+        remote.chatTyping = false;
+      }
+    }
+
+    function appendChatLine(displayName, message) {
+      const line = document.createElement("div");
+      line.className = "chat-line";
+      const speaker = document.createElement("strong");
+      speaker.textContent = `${displayName}:`;
+      line.appendChild(speaker);
+      line.append(` ${message}`);
+      chatLog.appendChild(line);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function renderChatHistory() {
+      chatLog.innerHTML = "";
+      loadChatHistory().forEach((entry) => {
+        appendChatLine(entry.displayName, entry.message);
+      });
+    }
+
+    function addChatMessage(entry, store = true) {
+      appendChatLine(entry.displayName, entry.message);
+      if (store) {
+        const history = loadChatHistory();
+        history.push(entry);
+        saveChatHistory(history);
+      }
+      setOverheadChat(entry.clientId, entry.message);
+    }
+
+    function enforceChatModeration(rawMessage, filteredMessage) {
+      if (!currentSession?.username) {
+        return false;
+      }
+
+      const username = currentSession.username;
+      const entry = getModerationEntry(username);
+      entry.offenses += 1;
+      entry.lastMessage = rawMessage;
+
+      if (entry.offenses >= 4) {
+        entry.bannedUntil = Date.now() + 5 * 60 * 1000;
+        setModerationEntry(username, entry);
+        if (gameState.started) {
+          leaveGameToMenu();
+        } else {
+          updateMenuModerationStatus();
+        }
+        return true;
+      }
+
+      setModerationEntry(username, entry);
+      showGameNotice(`Warning ${entry.offenses}/4. Filtered: ${filteredMessage}`);
+      updateMenuModerationStatus();
+      return false;
+    }
+
+    function submitChatMessage() {
+      if (!currentSession || !gameState.started) {
+        return;
+      }
+
+      const raw = chatInput.value.trim();
+      if (!raw) {
+        return;
+      }
+
+      chatInput.value = "";
+      const { filtered, matched } = filterChatMessage(raw);
+      if (matched) {
+        const banned = enforceChatModeration(raw, filtered);
+        if (banned) {
+          return;
+        }
+      }
+
+      const entry = {
+        type: "chat",
+        clientId: "local",
+        username: currentSession.username,
+        displayName: currentSession.displayName || currentSession.username,
+        message: filtered,
+        createdAt: Date.now()
+      };
+
+      addChatMessage(entry, true);
+      if (multiplayer.channel) {
+        multiplayer.channel.postMessage({
+          ...entry,
+          clientId: multiplayer.clientId
+        });
+      }
+    }
+
+    function isTypingInChat() {
+      return document.activeElement === chatInput;
+    }
+
+    function resetGameMovementInput() {
+      gameState.input.forward = false;
+      gameState.input.back = false;
+      gameState.input.left = false;
+      gameState.input.right = false;
+      gameState.input.jump = false;
+    }
+
+    function bindInput() {
+      if (gameState.keysBound) {
+        return;
+      }
+
+      const setKey = (code, value) => {
+        if (code === "KeyW") gameState.input.forward = value;
+        if (code === "KeyS") gameState.input.back = value;
+        if (code === "KeyA") gameState.input.left = value;
+        if (code === "KeyD") gameState.input.right = value;
+        if (code === "Space") gameState.input.jump = value;
+      };
+
+      window.addEventListener("keydown", (event) => {
+        if (!gameState.started) {
+          return;
+        }
+
+        if (isTypingInChat()) {
+          if (event.code === "Escape") {
+            chatInput.blur();
+            chatPanel.classList.remove("open");
+          }
+          return;
+        }
+
+        if (["Space", "KeyW", "KeyA", "KeyS", "KeyD", "KeyK", "KeyM"].includes(event.code)) {
+          event.preventDefault();
+        }
+
+        if (event.code === "Escape") {
+          cornerPanel.classList.toggle("open");
+          return;
+        }
+
+        if (event.code === "KeyK") {
+          setZoom(gameState.zoom - 1);
+          return;
+        }
+
+        if (event.code === "KeyM") {
+          setZoom(gameState.zoom + 1);
+          return;
+        }
+
+        setKey(event.code, true);
+      });
+
+      window.addEventListener("keyup", (event) => {
+        if (isTypingInChat()) {
+          return;
+        }
+        setKey(event.code, false);
+      });
+
+      gameCanvas.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+      });
+
+      gameCanvas.addEventListener("wheel", (event) => {
+        if (!gameState.started) {
+          return;
+        }
+
+        event.preventDefault();
+        setZoom(gameState.zoom + Math.sign(event.deltaY) * 0.8);
+      }, { passive: false });
+
+      gameCanvas.addEventListener("mousedown", (event) => {
+        if (!gameState.started) {
+          return;
+        }
+
+        if (event.button === 0 && gameState.zoom <= 0.75) {
+          gameCanvas.requestPointerLock?.();
+        }
+
+        if (event.button === 2) {
+          gameState.input.rightMouse = true;
+        }
+      });
+
+      window.addEventListener("mouseup", (event) => {
+        if (event.button === 2) {
+          gameState.input.rightMouse = false;
+        }
+      });
+
+      window.addEventListener("mousemove", (event) => {
+        if (!gameState.started) {
+          return;
+        }
+
+        const freeLook = gameState.zoom <= 0.75 && document.pointerLockElement === gameCanvas;
+        if (!freeLook && !gameState.input.rightMouse) {
+          return;
+        }
+
+        gameState.cameraYaw -= event.movementX * gameState.mouseSensitivity;
+        gameState.cameraPitch -= event.movementY * gameState.mouseSensitivity * 0.8;
+        gameState.cameraPitch = THREE.MathUtils.clamp(gameState.cameraPitch, -0.55, 1.05);
+      });
+
+      document.addEventListener("pointerlockchange", () => {
+        gameState.pointerLocked = document.pointerLockElement === gameCanvas;
+      });
+
+      window.addEventListener("resize", () => {
+        if (!gameState.camera || !gameState.renderer) {
+          if (studioState.open && studioState.camera && studioState.renderer) {
+            studioState.camera.aspect = studioCanvas.clientWidth / studioCanvas.clientHeight;
+            studioState.camera.updateProjectionMatrix();
+            studioState.renderer.setSize(studioCanvas.clientWidth || window.innerWidth, studioCanvas.clientHeight || window.innerHeight);
+          }
+          return;
+        }
+
+        gameState.camera.aspect = window.innerWidth / window.innerHeight;
+        gameState.camera.updateProjectionMatrix();
+        gameState.renderer.setSize(window.innerWidth, window.innerHeight);
+
+        if (studioState.open && studioState.camera && studioState.renderer) {
+          studioState.camera.aspect = studioCanvas.clientWidth / studioCanvas.clientHeight;
+          studioState.camera.updateProjectionMatrix();
+          studioState.renderer.setSize(studioCanvas.clientWidth || window.innerWidth, studioCanvas.clientHeight || window.innerHeight);
+        }
+      });
+
+      gameState.keysBound = true;
+    }
+
+    function clearWorld() {
+      if (gameState.animationFrame) {
+        cancelAnimationFrame(gameState.animationFrame);
+        gameState.animationFrame = 0;
+      }
+
+      if (multiplayer.channel) {
+        multiplayer.channel.postMessage({ type: "leave", clientId: multiplayer.clientId });
+        multiplayer.channel.close();
+        multiplayer.channel = null;
+      }
+
+      gameState.remotePlayers.forEach((remote, id) => {
+        gameState.scene?.remove(remote.avatar);
+        removeLabel(id);
+      });
+      gameState.remotePlayers.clear();
+
+      gameState.labels.forEach((label) => label.remove());
+      gameState.labels.clear();
+      clearChatHistory();
+
+      gameState.pieces.forEach((piece) => gameState.scene?.remove(piece.mesh));
+      gameState.pieces = [];
+
+      gameState.markers.forEach((marker) => gameState.scene?.remove(marker));
+      gameState.markers = [];
+
+      if (gameState.scene && gameState.localPlayer) {
+        gameState.scene.remove(gameState.localPlayer);
+      }
+
+      if (gameState.renderer) {
+        gameState.renderer.dispose();
+      }
+
+      gameState.scene = null;
+      gameState.camera = null;
+      gameState.renderer = null;
+      gameState.clock = null;
+      gameState.localPlayer = null;
+      gameState.started = false;
+      gameState.dead = false;
+      gameState.respawnAt = 0;
+      gameState.accumulator = 0;
+      gameState.lastFrameTime = 0;
+      gameState.colliders = [];
+      gameState.input.rightMouse = false;
+      gameState.pointerLocked = false;
+      if (document.pointerLockElement === gameCanvas) {
+        document.exitPointerLock?.();
+      }
+      deathOverlay.classList.remove("show");
+      cornerPanel.classList.remove("open");
+    }
+
+    function setStudioStatus(message) {
+      studioStatus.textContent = message;
+    }
+
+    function closeStudioChannel() {
+      if (studioState.channel) {
+        studioState.channel.close();
+        studioState.channel = null;
+      }
+    }
+
+    function openStudioChannel() {
+      closeStudioChannel();
+      if (!studioState.shared || !studioState.gameId) {
+        return;
+      }
+
+      studioState.channel = new BroadcastChannel(`meepblox-studio-${studioState.gameId}`);
+      studioState.channel.onmessage = (event) => {
+        const data = event.data;
+        if (!data || data.type !== "studio-sync") {
+          return;
+        }
+
+        studioState.syncing = true;
+        studioState.objects = data.objects;
+        studioGameName.value = data.name;
+        studioSharedSelect.value = data.shared ? "yes" : "no";
+        studioState.shared = data.shared;
+        renderStudioObjects();
+        studioState.syncing = false;
+      };
+    }
+
+    function snapshotStudioGame() {
+      return {
+        id: studioState.gameId,
+        name: studioGameName.value.trim() || "Untitled Game",
+        shared: studioState.shared,
+        published: studioState.published,
+        publishedAt: Date.now(),
+        objects: studioState.objects.map((objectData) => ({
+          ...objectData,
+          position: { ...objectData.position },
+          rotation: { ...objectData.rotation },
+          scale: { ...objectData.scale }
+        }))
+      };
+    }
+
+    function persistStudioState(options = {}) {
+      if (!studioState.gameId || studioState.syncing) {
+        return;
+      }
+
+      if (typeof options.published === "boolean") {
+        studioState.published = options.published;
+      }
+
+      const payload = snapshotStudioGame();
+      upsertPublishedGame(payload);
+      renderGamesMenu();
+      renderStudioSavedGames();
+      if (studioState.shared && studioState.channel) {
+        studioState.channel.postMessage({
+          type: "studio-sync",
+          ...payload
+        });
+      }
+
+      if (options.message) {
+        setStudioStatus(options.message);
+      }
+    }
+
+    function syncStudioState() {
+      const existing = studioState.gameId ? getPublishedGame(studioState.gameId) : null;
+      if (existing || studioState.shared || studioState.published) {
+        persistStudioState();
+      }
+    }
+
+    function getAxisColor(axis) {
+      return axis === "x" ? 0xe15c5c : axis === "y" ? 0x57b95d : 0x4f82df;
+    }
+
+    function getAxisVector(axis) {
+      if (axis === "x") {
+        return new THREE.Vector3(1, 0, 0);
+      }
+      if (axis === "y") {
+        return new THREE.Vector3(0, 1, 0);
+      }
+      return new THREE.Vector3(0, 0, 1);
+    }
+
+    function clearStudioGizmo() {
+      if (studioState.gizmoGroup && studioState.scene) {
+        studioState.scene.remove(studioState.gizmoGroup);
+      }
+      studioState.gizmoGroup = null;
+      studioState.gizmoHandles = [];
+    }
+
+    function makeGizmoHandle(material, geometry, axis, position, rotation = null) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.copy(position);
+      if (rotation) {
+        mesh.rotation.set(rotation.x, rotation.y, rotation.z);
+      }
+      mesh.renderOrder = 6;
+      mesh.userData.gizmoAxis = axis;
+      return mesh;
+    }
+
+    function createStudioGizmo(selected) {
+      clearStudioGizmo();
+      if (!studioState.scene || !selected) {
+        return;
+      }
+
+      const group = new THREE.Group();
+      group.position.set(selected.position.x, selected.position.y, selected.position.z);
+      const cameraDistance = studioState.camera ? studioState.camera.position.distanceTo(group.position) : 20;
+      const gizmoScale = THREE.MathUtils.clamp(cameraDistance * 0.09, 1.1, 4.5);
+      group.scale.setScalar(gizmoScale);
+      studioState.gizmoHandles = [];
+
+      ["x", "y", "z"].forEach((axis) => {
+        const color = getAxisColor(axis);
+        const material = new THREE.MeshBasicMaterial({ color, depthTest: false, transparent: true, opacity: 0.96 });
+        if (studioState.tool === "rotate") {
+          const ring = makeGizmoHandle(
+            material,
+            new THREE.TorusGeometry(1.55, 0.06, 12, 48),
+            axis,
+            new THREE.Vector3()
+          );
+          if (axis === "x") {
+            ring.rotation.y = Math.PI / 2;
+          } else if (axis === "y") {
+            ring.rotation.x = Math.PI / 2;
+          }
+          group.add(ring);
+          studioState.gizmoHandles.push(ring);
+          return;
+        }
+
+        const shaftLength = 1.8;
+        const shaftRadius = 0.07;
+        const tipOffset = 0.95;
+        const axisVector = getAxisVector(axis);
+        const shaftPosition = axisVector.clone().multiplyScalar(shaftLength / 2 + 0.15);
+        const tipPosition = axisVector.clone().multiplyScalar(shaftLength + 0.2);
+        const shaftRotation = axis === "x"
+          ? { x: 0, y: 0, z: -Math.PI / 2 }
+          : axis === "z"
+            ? { x: Math.PI / 2, y: 0, z: 0 }
+            : { x: 0, y: 0, z: 0 };
+
+        const shaft = makeGizmoHandle(
+          material,
+          new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftLength, 10),
+          axis,
+          shaftPosition,
+          shaftRotation
+        );
+        const tipGeometry = studioState.tool === "move"
+          ? new THREE.ConeGeometry(0.12, 0.36, 12)
+          : new THREE.BoxGeometry(0.24, 0.24, 0.24);
+        const tipRotation = studioState.tool === "move"
+          ? axis === "x"
+            ? { x: 0, y: 0, z: -Math.PI / 2 }
+            : axis === "z"
+              ? { x: Math.PI / 2, y: 0, z: 0 }
+              : { x: 0, y: 0, z: 0 }
+          : null;
+        const tip = makeGizmoHandle(material, tipGeometry, axis, tipPosition, tipRotation);
+        group.add(shaft, tip);
+        studioState.gizmoHandles.push(shaft, tip);
+
+        if (studioState.tool === "scale") {
+          const center = makeGizmoHandle(
+            material,
+            new THREE.BoxGeometry(0.18, 0.18, 0.18),
+            axis,
+            axisVector.clone().multiplyScalar(tipOffset)
+          );
+          group.add(center);
+          studioState.gizmoHandles.push(center);
+        }
+      });
+
+      studioState.gizmoGroup = group;
+      studioState.scene.add(group);
+    }
+
+    function renderStudioScene() {
+      if (!studioState.scene) {
+        return;
+      }
+
+      clearStudioGizmo();
+      studioState.meshes.forEach((mesh) => studioState.scene.remove(mesh));
+      studioState.meshes.clear();
+
+      studioState.objects.forEach((objectData) => {
+        const mesh = createPropMesh(objectData);
+        mesh.position.set(objectData.position.x, objectData.position.y, objectData.position.z);
+        mesh.rotation.set(
+          THREE.MathUtils.degToRad(objectData.rotation.x),
+          THREE.MathUtils.degToRad(objectData.rotation.y),
+          THREE.MathUtils.degToRad(objectData.rotation.z)
+        );
+        mesh.scale.set(objectData.scale.x, objectData.scale.y, objectData.scale.z);
+        if (objectData.id === studioState.selectedId) {
+          mesh.material.emissive = new THREE.Color(0x274f9f);
+          mesh.material.emissiveIntensity = 0.18;
+        }
+        studioState.scene.add(mesh);
+        studioState.meshes.set(objectData.id, mesh);
+      });
+
+      createStudioGizmo(getSelectedStudioObject());
+    }
+
+    function updateStudioInspector() {
+      const selected = studioState.objects.find((objectData) => objectData.id === studioState.selectedId);
+      studioToolReadout.textContent = studioState.tool[0].toUpperCase() + studioState.tool.slice(1);
+      if (!selected) {
+        studioSelectedType.textContent = "None";
+        return;
+      }
+
+      studioSelectedType.textContent = selected.type;
+    }
+
+    function renderStudioObjects() {
+      studioObjectList.innerHTML = "";
+      studioState.objects.forEach((objectData, index) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = `studio-object-item${objectData.id === studioState.selectedId ? " active" : ""}`;
+        item.textContent = `${index + 1}. ${objectData.type}`;
+        item.addEventListener("click", () => {
+          studioState.selectedId = objectData.id;
+          renderStudioObjects();
+          setStudioStatus(`${objectData.type} selected.`);
+          renderStudioScene();
+        });
+        studioObjectList.appendChild(item);
+      });
+
+      refreshStudioToolButtons();
+      updateStudioInspector();
+      renderStudioScene();
+    }
+
+    function makeStudioObject(type) {
+      const base = {
+        id: crypto.randomUUID(),
+        type,
+        color: type === "cube" ? "#d58d5d" : type === "sphere" ? "#65a4d9" : type === "cylinder" ? "#7cc36a" : type === "baseplate" ? "#6cbd45" : "#f2d14f",
+        position: { x: 0, y: type === "spawn" ? 1.1 : type === "baseplate" ? -0.5 : 1, z: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        scale: { x: 1, y: 1, z: 1 }
+      };
+
+      if (type === "spawn") {
+        base.scale = { x: 1, y: 1, z: 1 };
+      } else if (type === "baseplate") {
+        base.scale = { x: 220, y: 1, z: 220 };
+      }
+
+      return base;
+    }
+
+    function addStudioObject(type) {
+      const selected = getSelectedStudioObject();
+      if (type === "spawn") {
+        studioState.objects = studioState.objects.filter((objectData) => objectData.type !== "spawn");
+      } else if (type === "baseplate") {
+        studioState.objects = studioState.objects.filter((objectData) => objectData.type !== "baseplate");
+      }
+
+      const objectData = makeStudioObject(type);
+      if (selected) {
+        objectData.position = {
+          x: selected.position.x,
+          y: selected.position.y,
+          z: selected.position.z
+        };
+
+        if (type !== "baseplate" && type !== "spawn") {
+          objectData.position.x += 1.5;
+          objectData.position.y += 0.5;
+        }
+
+        if (type === "spawn") {
+          objectData.position.y = Math.max(selected.position.y, 1.1);
+        }
+
+        if (type === "baseplate") {
+          objectData.position.y = selected.position.y;
+        }
+      }
+
+      studioState.objects.push(objectData);
+      studioState.selectedId = objectData.id;
+      renderStudioObjects();
+      syncStudioState();
+    }
+
+    function duplicateSelectedStudioObject() {
+      const selected = getSelectedStudioObject();
+      if (!selected) {
+        setStudioStatus("Select an object to duplicate.");
+        return;
+      }
+
+      if (selected.type === "spawn") {
+        addStudioObject("spawn");
+        return;
+      }
+
+      if (selected.type === "baseplate") {
+        addStudioObject("baseplate");
+        return;
+      }
+
+      const duplicate = {
+        ...selected,
+        id: crypto.randomUUID(),
+        position: {
+          x: selected.position.x + 1.5,
+          y: selected.position.y,
+          z: selected.position.z + 1.5
+        },
+        rotation: { ...selected.rotation },
+        scale: { ...selected.scale }
+      };
+
+      studioState.objects.push(duplicate);
+      studioState.selectedId = duplicate.id;
+      renderStudioObjects();
+      syncStudioState();
+      setStudioStatus(`${selected.type} duplicated.`);
+    }
+
+    function setStudioTool(tool) {
+      studioState.tool = tool;
+      refreshStudioToolButtons();
+      updateStudioInspector();
+      setStudioStatus(`${tool[0].toUpperCase() + tool.slice(1)} tool ready.`);
+    }
+
+    function refreshStudioToolButtons() {
+      const tool = studioState.tool;
+      studioMoveToolButton.classList.toggle("active", tool === "move");
+      studioMoveToolButton.classList.toggle("secondary", tool !== "move");
+      studioRotateToolButton.classList.toggle("active", tool === "rotate");
+      studioRotateToolButton.classList.toggle("secondary", tool !== "rotate");
+      studioScaleToolButton.classList.toggle("active", tool === "scale");
+      studioScaleToolButton.classList.toggle("secondary", tool !== "scale");
+    }
+
+    function getSelectedStudioObject() {
+      return studioState.objects.find((objectData) => objectData.id === studioState.selectedId) || null;
+    }
+
+    function setStudioPointer(event) {
+      const rect = studioCanvas.getBoundingClientRect();
+      studioState.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      studioState.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    }
+
+    function pickStudioObject(event) {
+      if (!studioState.camera) {
+        return null;
+      }
+
+      setStudioPointer(event);
+      studioState.raycaster.setFromCamera(studioState.pointer, studioState.camera);
+      const meshes = Array.from(studioState.meshes.values());
+      const hit = studioState.raycaster.intersectObjects(meshes, false)[0];
+      if (!hit) {
+        return null;
+      }
+
+      return studioState.objects.find((objectData) => studioState.meshes.get(objectData.id) === hit.object) || null;
+    }
+
+    function pickStudioHandle(event) {
+      if (!studioState.camera || !studioState.gizmoHandles.length) {
+        return null;
+      }
+
+      setStudioPointer(event);
+      studioState.raycaster.setFromCamera(studioState.pointer, studioState.camera);
+      const hit = studioState.raycaster.intersectObjects(studioState.gizmoHandles, false)[0];
+      return hit?.object?.userData?.gizmoAxis || "";
+    }
+
+    function projectStudioWorldPoint(point) {
+      const rect = studioCanvas.getBoundingClientRect();
+      const projected = point.clone().project(studioState.camera);
+      return {
+        x: ((projected.x + 1) / 2) * rect.width,
+        y: ((-projected.y + 1) / 2) * rect.height
+      };
+    }
+
+    function getStudioAxisDragAmount(event, axis, worldSpan = 2) {
+      const selected = getSelectedStudioObject();
+      if (!selected || !studioState.camera) {
+        return 0;
+      }
+
+      const origin = new THREE.Vector3(selected.position.x, selected.position.y, selected.position.z);
+      const endpoint = origin.clone().addScaledVector(getAxisVector(axis), worldSpan);
+      const screenOrigin = projectStudioWorldPoint(origin);
+      const screenEndpoint = projectStudioWorldPoint(endpoint);
+      const axisScreenX = screenEndpoint.x - screenOrigin.x;
+      const axisScreenY = screenEndpoint.y - screenOrigin.y;
+      const axisLength = Math.hypot(axisScreenX, axisScreenY);
+      if (axisLength < 1) {
+        return (event.clientX - studioState.dragStartMouseX) * 0.02;
+      }
+
+      const deltaX = event.clientX - studioState.dragStartMouseX;
+      const deltaY = event.clientY - studioState.dragStartMouseY;
+      const pixelsAlongAxis = ((deltaX * axisScreenX) + (deltaY * axisScreenY)) / axisLength;
+      return (pixelsAlongAxis / axisLength) * worldSpan;
+    }
+
+    function beginStudioDrag(event, axis = "") {
+      const selected = getSelectedStudioObject();
+      if (!selected) {
+        return false;
+      }
+
+      studioState.dragging = true;
+      studioState.activeAxis = axis;
+      studioState.dragStartMouseX = event.clientX;
+      studioState.dragStartMouseY = event.clientY;
+      studioState.dragStartPosition = { ...selected.position };
+      studioState.dragStartScale = { ...selected.scale };
+      studioState.dragStartRotation = { ...selected.rotation };
+
+      if (studioState.tool === "move" && studioState.camera && !axis) {
+        setStudioPointer(event);
+        studioState.raycaster.setFromCamera(studioState.pointer, studioState.camera);
+        studioState.dragPlane.set(new THREE.Vector3(0, 1, 0), -selected.position.y);
+        if (studioState.raycaster.ray.intersectPlane(studioState.dragPlane, studioState.dragPoint)) {
+          studioState.dragOffset.set(
+            selected.position.x - studioState.dragPoint.x,
+            selected.position.y - studioState.dragPoint.y,
+            selected.position.z - studioState.dragPoint.z
+          );
+        } else {
+          studioState.dragOffset.set(0, 0, 0);
+        }
+      }
+
+      return true;
+    }
+
+    function endStudioDrag() {
+      if (!studioState.dragging) {
+        return;
+      }
+
+      studioState.dragging = false;
+      studioState.activeAxis = "";
+      syncStudioState();
+    }
+
+    function updateStudioDrag(event) {
+      if (!studioState.dragging || !studioState.camera) {
+        return;
+      }
+
+      const selected = getSelectedStudioObject();
+      if (!selected) {
+        return;
+      }
+
+      if (studioState.activeAxis) {
+        if (studioState.tool === "move") {
+          const amount = getStudioAxisDragAmount(event, studioState.activeAxis, 2.2);
+          const nextPosition = studioState.dragStartPosition[studioState.activeAxis] + amount;
+          selected.position[studioState.activeAxis] = studioState.moveSnap
+            ? Math.round(nextPosition * 2) / 2
+            : Math.round(nextPosition * 100) / 100;
+        } else if (studioState.tool === "scale") {
+          const amount = getStudioAxisDragAmount(event, studioState.activeAxis, 1.8);
+          const nextScale = studioState.dragStartScale[studioState.activeAxis] + amount;
+          selected.scale[studioState.activeAxis] = Math.max(
+            0.25,
+            studioState.scaleSnap ? Math.round(nextScale * 4) / 4 : Math.round(nextScale * 100) / 100
+          );
+        } else if (studioState.tool === "rotate") {
+          const deltaX = event.clientX - studioState.dragStartMouseX;
+          const deltaY = event.clientY - studioState.dragStartMouseY;
+          const rotateDelta = studioState.activeAxis === "x"
+            ? -deltaY * 0.8
+            : studioState.activeAxis === "y"
+              ? -deltaX * 0.8
+              : (-deltaX + deltaY) * 0.55;
+          const nextRotation = studioState.dragStartRotation[studioState.activeAxis] + rotateDelta;
+          selected.rotation[studioState.activeAxis] = studioState.rotateSnap
+            ? Math.round(nextRotation / 15) * 15
+            : Math.round(nextRotation * 10) / 10;
+        }
+      } else if (studioState.tool === "move") {
+        setStudioPointer(event);
+        studioState.raycaster.setFromCamera(studioState.pointer, studioState.camera);
+        if (studioState.raycaster.ray.intersectPlane(studioState.dragPlane, studioState.dragPoint)) {
+          const nextX = studioState.dragPoint.x + studioState.dragOffset.x;
+          const nextZ = studioState.dragPoint.z + studioState.dragOffset.z;
+          selected.position.x = studioState.moveSnap ? Math.round(nextX * 2) / 2 : Math.round(nextX * 100) / 100;
+          selected.position.z = studioState.moveSnap ? Math.round(nextZ * 2) / 2 : Math.round(nextZ * 100) / 100;
+          if (event.shiftKey) {
+            const heightDelta = (studioState.dragStartMouseY - event.clientY) * 0.03;
+            const nextY = selected.position.y + heightDelta;
+            selected.position.y = Math.max(0.5, studioState.moveSnap ? Math.round(nextY * 2) / 2 : Math.round(nextY * 100) / 100);
+            studioState.dragStartMouseY = event.clientY;
+            studioState.dragPlane.set(new THREE.Vector3(0, 1, 0), -selected.position.y);
+          }
+        }
+      }
+
+      renderStudioScene();
+      updateStudioInspector();
+    }
+
+    function initStudioScene() {
+      if (studioState.renderer) {
+        studioState.renderer.dispose();
+      }
+
+      studioState.scene = new THREE.Scene();
+      studioState.scene.background = new THREE.Color(0xc7ddf9);
+      studioState.camera = new THREE.PerspectiveCamera(65, studioCanvas.clientWidth / studioCanvas.clientHeight, 0.1, 700);
+      studioState.renderer = new THREE.WebGLRenderer({ canvas: studioCanvas, antialias: true });
+      studioState.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      studioState.renderer.setSize(studioCanvas.clientWidth || window.innerWidth, studioCanvas.clientHeight || window.innerHeight);
+      studioState.renderer.shadowMap.enabled = true;
+
+      const ambient = new THREE.AmbientLight(0xffffff, 0.74);
+      const sun = new THREE.DirectionalLight(0xffffff, 1.1);
+      sun.position.set(34, 60, 20);
+      sun.castShadow = true;
+      studioState.scene.add(ambient, sun);
+
+      const ground = new THREE.Mesh(
+        new THREE.BoxGeometry(220, 1, 220),
+        new THREE.MeshLambertMaterial({ color: 0x6cbd45 })
+      );
+      ground.position.y = -0.5;
+      ground.receiveShadow = true;
+      studioState.scene.add(ground);
+
+      const grid = new THREE.GridHelper(220, 44, 0xffffff, 0xffffff);
+      grid.position.y = 0.01;
+      grid.material.transparent = true;
+      grid.material.opacity = 0.1;
+      studioState.scene.add(grid);
+
+      renderStudioScene();
+    }
+
+    function animateStudio() {
+      if (!studioState.open || !studioState.renderer || !studioState.scene || !studioState.camera) {
+        return;
+      }
+
+      if (studioState.leftMouse || studioState.rightMouse) {
+        const forward = new THREE.Vector3(Math.sin(studioState.cameraYaw), 0, Math.cos(studioState.cameraYaw)).normalize();
+        const right = new THREE.Vector3(forward.z, 0, -forward.x).normalize();
+        const moveSpeed = Math.max(0.18, studioState.zoom * 0.025);
+        if (studioState.input.forward) {
+          studioState.cameraTarget.addScaledVector(forward, moveSpeed);
+        }
+        if (studioState.input.back) {
+          studioState.cameraTarget.addScaledVector(forward, -moveSpeed);
+        }
+        if (studioState.input.left) {
+          studioState.cameraTarget.addScaledVector(right, moveSpeed);
+        }
+        if (studioState.input.right) {
+          studioState.cameraTarget.addScaledVector(right, -moveSpeed);
+        }
+        if (studioState.input.up) {
+          studioState.cameraTarget.y += moveSpeed;
+        }
+        if (studioState.input.down) {
+          studioState.cameraTarget.y -= moveSpeed;
+        }
+      }
+
+      const lookDirection = new THREE.Vector3(
+        Math.sin(studioState.cameraYaw) * Math.cos(studioState.cameraPitch),
+        Math.sin(studioState.cameraPitch),
+        Math.cos(studioState.cameraYaw) * Math.cos(studioState.cameraPitch)
+      );
+      const target = studioState.cameraTarget.clone();
+      const cameraPos = target.clone().addScaledVector(lookDirection, -studioState.zoom);
+      studioState.camera.position.lerp(cameraPos, 0.18);
+      studioState.camera.lookAt(target);
+      studioState.renderer.render(studioState.scene, studioState.camera);
+      studioState.animationFrame = requestAnimationFrame(animateStudio);
+    }
+
+    function loadStudioGame(gameId = "") {
+      const gameData = gameId ? getPublishedGame(gameId) : null;
+      const source = gameData || createDefaultGameData();
+      studioState.gameId = source.id;
+      studioState.shared = source.shared !== false;
+      studioState.published = Boolean(source.published);
+      studioState.objects = source.objects.map((objectData) => ({
+        ...objectData,
+        position: { ...objectData.position },
+        rotation: { ...objectData.rotation },
+        scale: { ...objectData.scale }
+      }));
+      studioState.selectedId = studioState.objects[0]?.id || "";
+      studioGameName.value = source.name;
+      studioSharedSelect.value = studioState.shared ? "yes" : "no";
+      studioMoveSnapSelect.value = studioState.moveSnap ? "on" : "off";
+      studioRotateSnapSelect.value = studioState.rotateSnap ? "on" : "off";
+      studioScaleSnapSelect.value = studioState.scaleSnap ? "on" : "off";
+      studioState.dragging = false;
+      setStudioTool("move");
+      setStudioStatus(studioState.shared ? "Shared editing is on for this game." : "Private editing is on for this game.");
+      renderStudioSavedGames();
+    }
+
+    function openStudio(gameId = "") {
+      clearWorld();
+      closeStudioChannel();
+      studioState.open = true;
+      studioState.cameraTarget.set(0, 2.5, 0);
+      studioState.cameraYaw = 0.25;
+      studioState.cameraPitch = 0.55;
+      studioState.zoom = 28;
+      loadStudioGame(gameId);
+      initStudioScene();
+      openStudioChannel();
+      renderStudioObjects();
+      showScreen(studioScreen);
+      animateStudio();
+    }
+
+    function closeStudio() {
+      studioState.open = false;
+      if (studioState.animationFrame) {
+        cancelAnimationFrame(studioState.animationFrame);
+        studioState.animationFrame = 0;
+      }
+      closeStudioChannel();
+      if (studioState.renderer) {
+        studioState.renderer.dispose();
+      }
+      studioState.dragging = false;
+      studioState.rightMouse = false;
+      clearStudioGizmo();
+      studioState.scene = null;
+      studioState.camera = null;
+      studioState.renderer = null;
+      studioState.meshes.clear();
+      if (currentSession) {
+        showMenu(currentSession);
+      } else {
+        showScreen(authScreen);
+      }
+    }
+
+    function beginGame(gameData = null) {
+      if (!currentSession) {
+        return;
+      }
+
+      if (getBanTimeLeft(currentSession.username) > 0) {
+        updateMenuModerationStatus();
+        return;
+      }
+
+      clearWorld();
+      createWorld(gameData);
+      openChannel();
+      bindInput();
+      currentGameData = gameData;
+      setPresence(true, gameData);
+      renderPlayerMenu();
+      renderChatHistory();
+      chatPanel.classList.remove("open");
+      cornerPanel.classList.remove("open");
+      showGameNotice("WASD move, Space jump, wheel zoom, click in first person to look.");
+      sendState(true);
+      showScreen(ingameScreen);
+      animate();
+    }
+
+    function leaveGameToMenu() {
+      clearWorld();
+      currentGameData = null;
+      setPresence(false, null);
+      showMenu(currentSession);
+    }
+
+    function createDeathMarker(position) {
+      const marker = new THREE.Mesh(
+        new THREE.TorusGeometry(0.95, 0.07, 12, 24),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true })
+      );
+      marker.rotation.x = Math.PI / 2;
+      marker.position.set(position.x, 0.07, position.z);
+      marker.userData.life = 3;
+      gameState.scene.add(marker);
+      gameState.markers.push(marker);
+    }
+
+    function triggerRespawnSequence() {
+      if (!gameState.localPlayer || gameState.dead) {
+        return;
+      }
+
+      const player = gameState.localPlayer;
+      const deathPosition = player.position.clone();
+      spawnAvatarShatter(player, 1);
+
+      player.visible = false;
+      player.userData.verticalVelocity = 0;
+      player.userData.grounded = false;
+      gameState.dead = true;
+      gameState.respawnAt = performance.now() + 3000;
+      deathOverlay.textContent = "Respawning in 3...";
+      deathOverlay.classList.add("show");
+      createDeathMarker(deathPosition);
+      sendState(true);
+    }
+
+    function respawnPlayer() {
+      if (!gameState.localPlayer) {
+        return;
+      }
+
+      gameState.localPlayer.position.copy(gameState.spawnPoint);
+      gameState.localPlayer.rotation.y = 0;
+      gameState.localPlayer.userData.verticalVelocity = 0;
+      gameState.localPlayer.userData.grounded = true;
+      gameState.localPlayer.visible = true;
+      gameState.dead = false;
+      gameState.respawnAt = 0;
+      deathOverlay.classList.remove("show");
+      sendState(true);
+    }
+
+    function updateRespawn() {
+      if (!gameState.dead) {
+        return;
+      }
+
+      const remainingMs = gameState.respawnAt - performance.now();
+      if (remainingMs <= 0) {
+        respawnPlayer();
+        return;
+      }
+
+      const remaining = Math.max(1, Math.ceil(remainingMs / 1000));
+      deathOverlay.textContent = `Respawning in ${remaining}...`;
+    }
+
+    function updatePieces(delta) {
+      gameState.pieces = gameState.pieces.filter((piece) => {
+        piece.life -= delta;
+        piece.velocity.y -= 34 * delta;
+        piece.mesh.position.addScaledVector(piece.velocity, delta);
+        piece.mesh.rotation.x += piece.spin.x * delta;
+        piece.mesh.rotation.y += piece.spin.y * delta;
+        piece.mesh.rotation.z += piece.spin.z * delta;
+
+        if (piece.mesh.position.y < 0.2) {
+          piece.mesh.position.y = 0.2;
+          piece.velocity.x *= 0.44;
+          piece.velocity.z *= 0.44;
+          piece.velocity.y *= -0.04;
+        }
+
+        if (piece.life <= 0) {
+          gameState.scene.remove(piece.mesh);
+          return false;
+        }
+
+        return true;
+      });
+
+      gameState.markers = gameState.markers.filter((marker) => {
+        marker.userData.life -= delta;
+        marker.material.opacity = Math.max(marker.userData.life / 3, 0);
+        marker.scale.setScalar(1 + (3 - marker.userData.life) * 0.16);
+        if (marker.userData.life <= 0) {
+          gameState.scene.remove(marker);
+          return false;
+        }
+        return true;
+      });
+    }
+
+    function resolvePlayerCollisions(player, previousPosition) {
+      const halfWidth = 0.55;
+      const height = 3.5;
+      let groundedOnPart = false;
+
+      gameState.colliders.forEach((box) => {
+        const minX = player.position.x - halfWidth;
+        const maxX = player.position.x + halfWidth;
+        const minY = player.position.y;
+        const maxY = player.position.y + height;
+        const minZ = player.position.z - halfWidth;
+        const maxZ = player.position.z + halfWidth;
+
+        if (maxX <= box.min.x || minX >= box.max.x || maxY <= box.min.y || minY >= box.max.y || maxZ <= box.min.z || minZ >= box.max.z) {
+          return;
+        }
+
+        const wasAbove = previousPosition.y >= box.max.y - 0.08;
+        if (wasAbove && player.userData.verticalVelocity <= 0) {
+          player.position.y = box.max.y;
+          player.userData.verticalVelocity = 0;
+          player.userData.grounded = true;
+          groundedOnPart = true;
+          return;
+        }
+
+        const pushLeft = maxX - box.min.x;
+        const pushRight = box.max.x - minX;
+        const pushFront = maxZ - box.min.z;
+        const pushBack = box.max.z - minZ;
+        const smallest = Math.min(pushLeft, pushRight, pushFront, pushBack);
+
+        if (smallest === pushLeft) {
+          player.position.x -= pushLeft;
+        } else if (smallest === pushRight) {
+          player.position.x += pushRight;
+        } else if (smallest === pushFront) {
+          player.position.z -= pushFront;
+        } else {
+          player.position.z += pushBack;
+        }
+      });
+
+      return groundedOnPart;
+    }
+
+    function updateLocalPlayer(delta) {
+      if (!gameState.localPlayer || gameState.dead) {
+        return;
+      }
+
+      const player = gameState.localPlayer;
+      const previousPosition = player.position.clone();
+      const moveX = (gameState.input.left ? 1 : 0) - (gameState.input.right ? 1 : 0);
+      const moveZ = (gameState.input.forward ? 1 : 0) - (gameState.input.back ? 1 : 0);
+
+      scratch.cameraForward.set(Math.sin(gameState.cameraYaw), 0, Math.cos(gameState.cameraYaw)).normalize();
+      scratch.cameraRight.set(scratch.cameraForward.z, 0, -scratch.cameraForward.x).normalize();
+      scratch.moveVector.set(0, 0, 0);
+      scratch.moveVector.addScaledVector(scratch.cameraForward, moveZ);
+      scratch.moveVector.addScaledVector(scratch.cameraRight, moveX);
+
+      let moveAmount = 0;
+      if (scratch.moveVector.lengthSq() > 0) {
+        scratch.moveVector.normalize();
+        const speed = 9;
+        player.position.addScaledVector(scratch.moveVector, speed * delta);
+        player.rotation.y = Math.atan2(scratch.moveVector.x, scratch.moveVector.z);
+        moveAmount = 1;
+      }
+
+      if (gameState.input.jump && player.userData.grounded) {
+        player.userData.verticalVelocity = 8.5;
+        player.userData.grounded = false;
+      }
+
+      player.userData.verticalVelocity -= 20 * delta;
+      player.position.y += player.userData.verticalVelocity * delta;
+
+      const groundedOnPart = resolvePlayerCollisions(player, previousPosition);
+
+      if (player.position.y <= 0) {
+        player.position.y = 0;
+        player.userData.verticalVelocity = 0;
+        player.userData.grounded = true;
+      } else if (!groundedOnPart) {
+        player.userData.grounded = false;
+      }
+
+      const limit = gameState.baseplateSize / 2 - 3;
+      player.position.x = THREE.MathUtils.clamp(player.position.x, -limit, limit);
+      player.position.z = THREE.MathUtils.clamp(player.position.z, -limit, limit);
+
+      applyAvatarAnimation(player, delta, moveAmount, !player.userData.grounded);
+    }
+
+    function updateRemotePlayers(delta) {
+      gameState.remotePlayers.forEach((remote, id) => {
+        remote.avatar.position.lerp(remote.targetPosition, 0.22);
+        remote.avatar.rotation.y = remote.state.rotationY || 0;
+
+        const movement = remote.avatar.position.distanceTo(remote.avatar.userData.lastPosition) / Math.max(delta, 0.001);
+        const moveAmount = THREE.MathUtils.clamp(movement / 7, 0, 1);
+        applyAvatarAnimation(remote.avatar, delta, moveAmount, remote.avatar.position.y > 0.1);
+        remote.avatar.userData.lastPosition.copy(remote.avatar.position);
+
+        if (!remote.avatar.visible) {
+          removeLabel(id);
+        }
+      });
+    }
+
+    function updateCamera() {
+      if (!gameState.localPlayer || !gameState.camera) {
+        return;
+      }
+
+      const player = gameState.localPlayer;
+      const eyeHeight = new THREE.Vector3(0, 2.85, 0);
+      scratch.worldTarget.copy(player.position).add(eyeHeight);
+
+      const lookDirection = scratch.worldLook.set(
+        Math.sin(gameState.cameraYaw) * Math.cos(gameState.cameraPitch),
+        Math.sin(gameState.cameraPitch),
+        Math.cos(gameState.cameraYaw) * Math.cos(gameState.cameraPitch)
+      ).normalize();
+
+      const firstPerson = gameState.zoom <= 0.75;
+      if (firstPerson) {
+        gameState.camera.position.copy(scratch.worldTarget);
+        gameState.camera.lookAt(scratch.worldTarget.clone().add(lookDirection));
+        player.visible = false;
+        removeLabel("local");
+        return;
+      }
+
+      player.visible = !gameState.dead;
+      scratch.cameraOffset.set(
+        -lookDirection.x * gameState.zoom,
+        1.15 + Math.max(0, gameState.zoom * 0.22) + lookDirection.y * 1.6,
+        -lookDirection.z * gameState.zoom
+      );
+
+      const cameraTarget = scratch.worldTarget.clone().add(scratch.cameraOffset);
+      gameState.camera.position.lerp(cameraTarget, 0.22);
+      gameState.camera.lookAt(scratch.worldTarget);
+    }
+
+    function updateLabels() {
+      if (!gameState.camera) {
+        return;
+      }
+
+      const projectLabel = (id, avatar, text, height) => {
+        if (!avatar.visible) {
+          removeLabel(id);
+          return;
+        }
+
+        const label = ensureLabel(id, text);
+        const chatNode = label.querySelector(".hud-chat");
+        let chatText = "";
+        let chatUntil = 0;
+
+        if (id === "local" && gameState.localPlayer) {
+          chatText = gameState.localPlayer.userData.chatText || "";
+          chatUntil = gameState.localPlayer.userData.chatUntil || 0;
+        } else {
+          const remote = gameState.remotePlayers.get(id);
+          chatText = remote?.chatText || "";
+          chatUntil = remote?.chatUntil || 0;
+        }
+
+        chatNode.textContent = chatUntil > Date.now() ? chatText : "";
+        chatNode.style.display = chatNode.textContent ? "block" : "none";
+
+        const worldPos = avatar.position.clone().add(new THREE.Vector3(0, height, 0));
+        const projected = worldPos.project(gameState.camera);
+        const onScreen = projected.z > -1 && projected.z < 1;
+
+        if (!onScreen) {
+          label.style.display = "none";
+          return;
+        }
+
+        label.style.display = "block";
+        label.style.left = `${(projected.x * 0.5 + 0.5) * window.innerWidth}px`;
+        label.style.top = `${(-projected.y * 0.5 + 0.5) * window.innerHeight}px`;
+      };
+
+      if (gameState.localPlayer && currentSession && gameState.zoom > 0.75 && !gameState.dead) {
+        projectLabel("local", gameState.localPlayer, currentSession.displayName || currentSession.username, 4.05);
+      }
+
+      gameState.remotePlayers.forEach((remote, id) => {
+        projectLabel(id, remote.avatar, remote.state.displayName || remote.state.username || "Player", 4.05);
+      });
+    }
+
+    function stepSimulation(delta) {
+      updateLocalPlayer(delta);
+      updateRemotePlayers(delta);
+      updateRespawn();
+      updatePieces(delta);
+      sendState();
+    }
+
+    function animate(now = performance.now()) {
+      if (!gameState.started || !gameState.renderer || !gameState.scene || !gameState.camera) {
+        return;
+      }
+
+      if (!gameState.lastFrameTime) {
+        gameState.lastFrameTime = now;
+      }
+
+      const elapsed = Math.min((now - gameState.lastFrameTime) / 1000, 1.5);
+      gameState.lastFrameTime = now;
+      gameState.accumulator += elapsed;
+
+      let steps = 0;
+      while (gameState.accumulator >= gameState.fixedStep && steps < 90) {
+        stepSimulation(gameState.fixedStep);
+        gameState.accumulator -= gameState.fixedStep;
+        steps += 1;
+      }
+
+      updateCamera();
+      updateLabels();
+      gameState.renderer.render(gameState.scene, gameState.camera);
+      gameState.animationFrame = requestAnimationFrame(animate);
+    }
+
+    cornerButton.addEventListener("click", () => {
+      chatPanel.classList.remove("open");
+      renderPlayerMenu();
+      cornerPanel.classList.toggle("open");
+    });
+
+    chatButton.addEventListener("click", () => {
+      cornerPanel.classList.remove("open");
+      chatPanel.classList.toggle("open");
+      if (chatPanel.classList.contains("open")) {
+        renderChatHistory();
+        chatInput.focus();
+      }
+    });
+
+    chatForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitChatMessage();
+    });
+
+    chatInput.addEventListener("input", () => {
+      resetGameMovementInput();
+    });
+    chatInput.addEventListener("focus", () => {
+      resetGameMovementInput();
+    });
+    chatInput.addEventListener("blur", () => {
+      resetGameMovementInput();
+    });
+
+    openStudioButton.addEventListener("click", () => {
+      openStudio();
+    });
+
+    [avatarHatSelect, avatarShirtColor, avatarPantsColor].forEach((input) => {
+      input.addEventListener("input", () => {
+        if (currentSession) {
+          currentSession.avatar = readAvatarEditor();
+          saveSession(currentSession);
+          if (gameState.localPlayer) {
+            applyAvatarCosmetics(gameState.localPlayer, currentSession.avatar);
+            sendState(true);
+          }
+        }
+      });
+    });
+
+    avatarSaveButton.addEventListener("click", async () => {
+      if (!currentSession) {
+        return;
+      }
+
+      currentSession.avatar = await savePlayerData(currentSession, readAvatarEditor());
+      saveSession(currentSession);
+      friendHint.textContent = "Avatar saved.";
+      friendHint.style.display = "block";
+      if (gameState.localPlayer) {
+        applyAvatarCosmetics(gameState.localPlayer, currentSession.avatar);
+        sendState(true);
+      }
+    });
+
+    studioBackButton.addEventListener("click", () => {
+      closeStudio();
+    });
+
+    studioNewButton.addEventListener("click", () => {
+      closeStudioChannel();
+      studioState.open = true;
+      loadStudioGame("");
+      initStudioScene();
+      openStudioChannel();
+      renderStudioObjects();
+    });
+
+    studioSaveButton.addEventListener("click", () => {
+      persistStudioState({ published: false, message: `Saved ${studioGameName.value.trim() || "Untitled Game"} as a draft.` });
+    });
+
+    studioPublishButton.addEventListener("click", () => {
+      persistStudioState({ published: true, message: `Published ${studioGameName.value.trim() || "Untitled Game"} to the menu.` });
+    });
+
+    [addBaseplateButton, addCubeButton, addSphereButton, addCylinderButton, addSpawnButton].forEach((button) => {
+      button.addEventListener("click", () => {
+        const typeMap = {
+          addBaseplateButton: "baseplate",
+          addCubeButton: "cube",
+          addSphereButton: "sphere",
+          addCylinderButton: "cylinder",
+          addSpawnButton: "spawn"
+        };
+        addStudioObject(typeMap[button.id]);
+      });
+    });
+
+    deleteObjectButton.addEventListener("click", () => {
+      if (!studioState.selectedId) {
+        setStudioStatus("Select an object to delete.");
+        return;
+      }
+
+      const selected = getSelectedStudioObject();
+      studioState.objects = studioState.objects.filter((objectData) => objectData.id !== studioState.selectedId);
+      studioState.selectedId = studioState.objects[0]?.id || "";
+      renderStudioObjects();
+      syncStudioState();
+      if (selected) {
+        setStudioStatus(`${selected.type} deleted.`);
+      }
+    });
+
+    duplicateObjectButton.addEventListener("click", () => {
+      duplicateSelectedStudioObject();
+    });
+
+    [studioMoveToolButton, studioRotateToolButton, studioScaleToolButton].forEach((button) => {
+      button.addEventListener("click", () => {
+        const toolMap = {
+          studioMoveToolButton: "move",
+          studioRotateToolButton: "rotate",
+          studioScaleToolButton: "scale"
+        };
+        setStudioTool(toolMap[button.id]);
+      });
+    });
+
+    studioMoveSnapSelect.addEventListener("change", () => {
+      studioState.moveSnap = studioMoveSnapSelect.value === "on";
+      setStudioStatus(studioState.moveSnap ? "Move snap on." : "Move snap off.");
+    });
+
+    studioRotateSnapSelect.addEventListener("change", () => {
+      studioState.rotateSnap = studioRotateSnapSelect.value === "on";
+      setStudioStatus(studioState.rotateSnap ? "Rotate snap on." : "Rotate snap off.");
+    });
+
+    studioScaleSnapSelect.addEventListener("change", () => {
+      studioState.scaleSnap = studioScaleSnapSelect.value === "on";
+      setStudioStatus(studioState.scaleSnap ? "Scale snap on." : "Scale snap off.");
+    });
+
+    studioGameName.addEventListener("input", () => {
+      syncStudioState();
+    });
+
+    studioSharedSelect.addEventListener("change", () => {
+      studioState.shared = studioSharedSelect.value === "yes";
+      syncStudioState();
+      openStudioChannel();
+      setStudioStatus(studioState.shared ? "Shared editing is on for this game." : "Private editing is on for this game.");
+    });
+
+    studioCanvas.addEventListener("contextmenu", (event) => event.preventDefault());
+    studioCanvas.addEventListener("mousedown", (event) => {
+      if (event.button === 2) {
+        studioState.rightMouse = true;
+        return;
+      }
+
+      if (event.button !== 0 || !studioState.open) {
+        return;
+      }
+
+      studioState.leftMouse = true;
+
+      const handleAxis = pickStudioHandle(event);
+      if (handleAxis) {
+        beginStudioDrag(event, handleAxis);
+        setStudioStatus(`${studioState.tool[0].toUpperCase() + studioState.tool.slice(1)} ${handleAxis.toUpperCase()} axis.`);
+        return;
+      }
+
+      const picked = pickStudioObject(event);
+      if (picked) {
+        const wasSelected = studioState.selectedId === picked.id;
+        studioState.selectedId = picked.id;
+        renderStudioObjects();
+        setStudioStatus(`${picked.type} selected.`);
+        if (wasSelected && studioState.tool === "move") {
+          beginStudioDrag(event);
+        }
+      } else {
+        studioState.selectedId = "";
+        renderStudioObjects();
+        setStudioStatus("Select an object to edit it.");
+      }
+    });
+    window.addEventListener("mouseup", (event) => {
+      if (event.button === 2) {
+        studioState.rightMouse = false;
+      }
+      if (event.button === 0) {
+        studioState.leftMouse = false;
+        endStudioDrag();
+      }
+    });
+    window.addEventListener("mousemove", (event) => {
+      if (!studioState.open) {
+        return;
+      }
+
+      if (studioState.dragging) {
+        updateStudioDrag(event);
+        return;
+      }
+
+      if (!studioState.rightMouse && !studioState.leftMouse) {
+        return;
+      }
+      studioState.cameraYaw -= event.movementX * 0.004;
+      studioState.cameraPitch -= event.movementY * 0.003;
+      studioState.cameraPitch = THREE.MathUtils.clamp(studioState.cameraPitch, -0.4, 1.15);
+    });
+    window.addEventListener("keydown", (event) => {
+      if (!studioState.open || event.repeat) {
+        return;
+      }
+
+      if (event.key === "w" || event.key === "W") {
+        studioState.input.forward = true;
+        if (!studioState.leftMouse && !studioState.rightMouse) {
+          setStudioTool("move");
+        }
+      } else if (event.key === "e" || event.key === "E") {
+        setStudioTool("rotate");
+      } else if (event.key === "r" || event.key === "R") {
+        setStudioTool("scale");
+      } else if (event.key === "a" || event.key === "A") {
+        studioState.input.left = true;
+      } else if (event.key === "s" || event.key === "S") {
+        studioState.input.back = true;
+      } else if (event.key === "d" || event.key === "D") {
+        studioState.input.right = true;
+      } else if (event.key === " ") {
+        studioState.input.up = true;
+      } else if (event.key === "Shift") {
+        studioState.input.down = true;
+      }
+    });
+    window.addEventListener("keyup", (event) => {
+      if (!studioState.open) {
+        return;
+      }
+
+      if (event.key === "w" || event.key === "W") {
+        studioState.input.forward = false;
+      } else if (event.key === "a" || event.key === "A") {
+        studioState.input.left = false;
+      } else if (event.key === "s" || event.key === "S") {
+        studioState.input.back = false;
+      } else if (event.key === "d" || event.key === "D") {
+        studioState.input.right = false;
+      } else if (event.key === " ") {
+        studioState.input.up = false;
+      } else if (event.key === "Shift") {
+        studioState.input.down = false;
+      }
+    });
+    studioCanvas.addEventListener("wheel", (event) => {
+      if (!studioState.open) {
+        return;
+      }
+      event.preventDefault();
+      studioState.zoom = THREE.MathUtils.clamp(studioState.zoom + Math.sign(event.deltaY) * 1.2, 8, 60);
+    }, { passive: false });
+
+    respawnButton.addEventListener("click", () => {
+      cornerPanel.classList.remove("open");
+      if (gameState.started && !gameState.dead) {
+        triggerRespawnSequence();
+      }
+    });
+
+    quitGameButton.addEventListener("click", () => {
+      cornerPanel.classList.remove("open");
+      leaveGameToMenu();
+    });
+
+    logoutButton.addEventListener("click", () => {
+      clearPresence(currentSession?.username);
+      clearSession();
+      currentSession = null;
+      if (studioState.open) {
+        closeStudioChannel();
+        if (studioState.animationFrame) {
+          cancelAnimationFrame(studioState.animationFrame);
+          studioState.animationFrame = 0;
+        }
+        if (studioState.renderer) {
+          studioState.renderer.dispose();
+        }
+        studioState.open = false;
+      }
+      if (gameState.started) {
+        clearWorld();
+      }
+      showScreen(authScreen);
+      setAuthTab("login");
+      createForm.reset();
+      loginForm.reset();
+    });
+
+    window.addEventListener("beforeunload", () => {
+      clearPresence(currentSession?.username);
+      if (multiplayer.channel) {
+        multiplayer.channel.postMessage({ type: "leave", clientId: multiplayer.clientId });
+      }
+    });
+
+    window.addEventListener("storage", (event) => {
+      if (event.key === FRIEND_STATE_KEY || event.key === PRESENCE_KEY || event.key === MODERATION_KEY || event.key === GAMES_KEY) {
+        renderFriends();
+        renderPlayerMenu();
+        updateMenuModerationStatus();
+        renderGamesMenu();
+      }
+
+      if (event.key === CHAT_HISTORY_KEY && chatPanel.classList.contains("open")) {
+        renderChatHistory();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (studioState.open && studioState.camera && studioState.renderer) {
+        studioState.camera.aspect = studioCanvas.clientWidth / studioCanvas.clientHeight;
+        studioState.camera.updateProjectionMatrix();
+        studioState.renderer.setSize(studioCanvas.clientWidth || window.innerWidth, studioCanvas.clientHeight || window.innerHeight);
+      }
+    });
+
+    startModerationTicker();
+
+    const savedSession = loadSession();
+    if (savedSession && savedSession.username) {
+      savedSession.avatar = await loadPlayerData(savedSession.sessionTicket || "", savedSession.username);
+      saveSession(savedSession);
+      showMenu(savedSession);
+    } else {
+      setAuthTab("create");
+      showScreen(authScreen);
+    }
+  </script>
+</body>
+</html>
